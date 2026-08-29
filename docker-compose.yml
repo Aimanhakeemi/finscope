@@ -21,6 +21,7 @@ services:
       DATABASE_URL: postgresql+psycopg://finscope:finscope@db:5432/finscope
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       FINSCOPE_LLM_MODEL: ${FINSCOPE_LLM_MODEL:-claude-sonnet-5}
+      FINSCOPE_READONLY_PASSWORD: ${FINSCOPE_READONLY_PASSWORD:-change-me}
     depends_on:
       db:
         condition: service_healthy
@@ -28,7 +29,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
   web:
     build: ./frontend

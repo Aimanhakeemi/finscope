@@ -72,7 +72,9 @@ def detect_recurring(
 
         txns = sorted(txns, key=lambda t: t.txn_date)
         gaps = [
-            (b.txn_date - a.txn_date).days for a, b in zip(txns, txns[1:]) if b.txn_date != a.txn_date
+            (b.txn_date - a.txn_date).days
+            for a, b in zip(txns, txns[1:])  # noqa: B905
+            if b.txn_date != a.txn_date
         ]
         if len(gaps) < MIN_OCCURRENCES - 1:
             continue

@@ -7,6 +7,24 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: finscope
+          POSTGRES_PASSWORD: finscope
+          POSTGRES_DB: finscope
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U finscope -d finscope"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://finscope:finscope@localhost:5432/finscope
+      FINSCOPE_READONLY_PASSWORD: change-me
+      ANTHROPIC_API_KEY: ""
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,9 +36,12 @@ jobs:
       - name: Lint
         run: ruff check backend
       - name: Type-check
-        run: mypy backend/app || true   # relax until types are complete
+        run: mypy backend/app
       - name: Generate synthetic data
         run: python data/generate_synthetic.py --months 12 --out data/sample_statement.csv
+      - name: Apply migrations
+        run: alembic upgrade head
+        working-directory: backend
       - name: Tests
         run: pytest backend -q
         env:
