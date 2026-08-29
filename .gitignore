@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Env / secrets
+.env
+
+# Data (regenerate with data/generate_synthetic.py) — keep the labels contract only
+data/*.csv
+!data/.gitkeep
+
+# ML artifacts (rebuilt by training script)
+backend/app/artifacts/*.joblib
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
