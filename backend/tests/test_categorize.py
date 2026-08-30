@@ -21,6 +21,7 @@ def test_rules_fire_before_the_model(tmp_path):
     prediction = Categorizer(model_path).predict_one("STARBUCKS STORE 119", -6)
     assert prediction.category == "coffee"
     assert prediction.source == "rule"
+    assert not prediction.low_confidence
 
 
 def test_model_path_predicts_a_taxonomy_category(tmp_path):
@@ -53,3 +54,4 @@ def test_low_confidence_stays_with_local_model():
     assert prediction.category == "coffee"
     assert prediction.confidence == 0.2
     assert prediction.source == "model"
+    assert prediction.low_confidence

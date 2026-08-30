@@ -29,9 +29,9 @@ else                              -> category = model best guess, source = "mode
 ```
 
 The `0.55` `CONFIDENCE_THRESHOLD` is a review threshold, not a routing decision.
-Rows with `confidence < 0.55` remain model predictions and can be surfaced in the
-UI for manual review. User corrections are persisted as training labels for the
-next local model retrain.
+Rows with `confidence < 0.55` remain model predictions and set
+`low_confidence = true` so the UI can surface them for manual review. User
+corrections are persisted as training labels for the next local model retrain.
 
 ### LLM boundary
 

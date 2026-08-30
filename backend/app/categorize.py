@@ -44,6 +44,7 @@ class Prediction:
     category: str
     confidence: float
     source: str  # "rule" | "model"
+    low_confidence: bool = False
 
 
 def _rule_match(description: str) -> str | None:
@@ -110,7 +111,7 @@ class Categorizer:
         classifier = model.named_steps["classifier"] if hasattr(model, "named_steps") else model
         category = str(classifier.classes_[idx])
 
-        return Prediction(category, top_p, "model")
+        return Prediction(category, top_p, "model", top_p < CONFIDENCE_THRESHOLD)
 
 
 def categorize_many(
