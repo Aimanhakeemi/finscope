@@ -8,6 +8,14 @@ from __future__ import annotations
 import os
 import re
 from dataclasses import dataclass
+from pathlib import Path
+
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+
+from app.etl import clean_merchant
 
 TAXONOMY = [
     "groceries", "dining", "coffee", "transport", "fuel", "utilities",
@@ -29,6 +37,7 @@ RULES: list[tuple[re.Pattern[str], str]] = [
 ]
 
 CONFIDENCE_THRESHOLD = 0.55  # tuned in docs/eval_report.md
+DEFAULT_MODEL_PATH = Path(__file__).resolve().parent / "artifacts" / "categorizer.joblib"
 
 
 @dataclass(frozen=True)
@@ -46,9 +55,42 @@ def _rule_match(description: str) -> str | None:
 
 
 class Categorizer:
-    def __init__(self, model_path: str = "app/artifacts/categorizer.joblib") -> None:
+    def __init__(self, model_path: str | Path = DEFAULT_MODEL_PATH) -> None:
         self._model = None
-        self._model_path = model_path
+        self._model_path = Path(model_path)
+
+    def train(self, df: pd.DataFrame) -> None:
+        """Train and persist the documented character n-gram classifier."""
+        if "merchant" in df:
+            merchants = df["merchant"].astype(str)
+        elif "description" in df:
+            merchants = df["description"].map(clean_merchant)
+        else:
+            raise ValueError("training data needs a merchant or description column")
+        if "category" not in df:
+            raise ValueError("training data needs a category column")
+        labels = df["category"].astype(str)
+        invalid = sorted(set(labels) - set(TAXONOMY))
+        if invalid:
+            raise ValueError(f"unknown categories: {invalid}")
+        if labels.nunique() < 2:
+            raise ValueError("training data needs at least two categories")
+
+        model = Pipeline(
+            [
+                ("tfidf", TfidfVectorizer(analyzer="char_wb", ngram_range=(2, 4))),
+                (
+                    "classifier",
+                    LogisticRegression(max_iter=1000, class_weight="balanced"),
+                ),
+            ]
+        )
+        model.fit(merchants, labels)
+        self._model_path.parent.mkdir(parents=True, exist_ok=True)
+        import joblib
+
+        joblib.dump(model, self._model_path)
+        self._model = model
 
     def _load(self):
         if self._model is None:
@@ -63,10 +105,11 @@ class Categorizer:
             return Prediction(rule, 1.0, "rule")
 
         model = self._load()
-        proba = model.predict_proba([description])[0]
+        proba = model.predict_proba([clean_merchant(description)])[0]
         idx = int(proba.argmax())
         top_p = float(proba[idx])
-        category = model.classes_[idx]
+        classifier = model.named_steps["classifier"] if hasattr(model, "named_steps") else model
+        category = str(classifier.classes_[idx])
 
         if top_p >= CONFIDENCE_THRESHOLD or not os.getenv("ANTHROPIC_API_KEY"):
             return Prediction(category, top_p, "model")
@@ -95,3 +138,15 @@ def _llm_classify(description: str, amount: float) -> Prediction:
     if label not in TAXONOMY:
         label = "other"
     return Prediction(label, 0.5, "llm")
+
+
+def categorize_many(
+    descriptions: list[str], amounts: list[float], categorizer: Categorizer | None = None
+) -> list[Prediction]:
+    if len(descriptions) != len(amounts):
+        raise ValueError("descriptions and amounts must have the same length")
+    categorizer = categorizer or Categorizer()
+    return [
+        categorizer.predict_one(description, amount)
+        for description, amount in zip(descriptions, amounts)  # noqa: B905
+    ]

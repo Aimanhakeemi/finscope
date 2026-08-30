@@ -5,34 +5,57 @@ from __future__ import annotations
 import os
 from collections.abc import Generator
 
+os.environ.pop("ANTHROPIC_API_KEY", None)
+
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-os.environ.pop("ANTHROPIC_API_KEY", None)
-
 
 @pytest.fixture
 def db_session() -> Generator[Session, None, None]:
+    from app.models import Base
+
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    with engine.begin() as connection:
-        connection.exec_driver_sql(
-            """
-            CREATE TABLE users (
-                id CHAR(32) PRIMARY KEY,
-                email TEXT NOT NULL UNIQUE,
-                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-        )
+    server_defaults = {
+        column: column.server_default
+        for table in Base.metadata.tables.values()
+        for column in table.columns
+    }
+    for column in server_defaults:
+        column.server_default = None
+    Base.metadata.create_all(engine)
+    for column, server_default in server_defaults.items():
+        column.server_default = server_default
     with Session(engine) as session:
         yield session
     engine.dispose()
+
+
+@pytest.fixture
+def client(
+    db_session: Session, monkeypatch: pytest.MonkeyPatch,
+) -> Generator[TestClient, None, None]:
+    from app import main
+    from app.db import get_session
+    from app.seed import seed_demo_user
+
+    monkeypatch.setattr(main, "SessionLocal", lambda: db_session)
+    seed_demo_user(db_session)
+
+    def override_session() -> Generator[Session, None, None]:
+        yield db_session
+
+    main.app.dependency_overrides[get_session] = override_session
+    with TestClient(main.app) as test_client:
+        yield test_client
+    main.app.dependency_overrides.clear()
 
 
 @pytest.fixture

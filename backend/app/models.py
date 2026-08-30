@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Optional
 
@@ -28,6 +28,10 @@ from sqlalchemy.types import Uuid
 
 class Base(DeclarativeBase):
     pass
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 Category = Enum(
@@ -82,6 +86,7 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
+        default=utc_now,
         server_default=text("now()"),
     )
 
@@ -109,6 +114,7 @@ class Import(Base):
     imported_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
+        default=utc_now,
         server_default=text("now()"),
     )
     date_min: Mapped[Optional[date]] = mapped_column(Date)
@@ -148,6 +154,7 @@ class RecurringGroup(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
+        default=utc_now,
         server_default=text("now()"),
     )
 
@@ -195,18 +202,25 @@ class Transaction(Base):
     is_recurring: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
+        default=False,
         server_default=text("false"),
     )
     recurring_group_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         Uuid(as_uuid=True),
         ForeignKey("recurring_groups.id", ondelete="SET NULL"),
     )
-    is_anomaly: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
+    is_anomaly: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=text("false"),
+    )
     anomaly_reason: Mapped[Optional[str]] = mapped_column(Text)
     dedupe_key: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
+        default=utc_now,
         server_default=text("now()"),
     )
 
@@ -236,6 +250,7 @@ class CategoryCorrection(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
+        default=utc_now,
         server_default=text("now()"),
     )
 

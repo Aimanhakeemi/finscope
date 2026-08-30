@@ -85,6 +85,10 @@ python data/generate_synthetic.py --months 12 --out data/sample_statement.csv
 docker compose up --build
 ```
 
+The API rebuilds the local categorizer from `data/sample_statement.labels.csv` when
+that labels file is present. CI does the same before running the backend tests; the
+generated model and sidecar stay uncommitted.
+
 - API + docs: http://localhost:8000/docs
 - Dashboard: http://localhost:5173
 

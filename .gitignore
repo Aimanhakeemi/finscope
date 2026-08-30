@@ -22,6 +22,7 @@ data/*.csv
 
 # ML artifacts (rebuilt by training script)
 backend/app/artifacts/*.joblib
+backend/app/artifacts/*.json
 
 # OS / editor
 .DS_Store

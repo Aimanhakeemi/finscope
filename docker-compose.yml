@@ -29,7 +29,12 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
-    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+      - ./data:/data
+    command: >-
+      sh -c "alembic upgrade head &&
+      if [ -f /data/sample_statement.labels.csv ]; then
+      python -m app.train_categorizer --labels /data/sample_statement.labels.csv;
+      fi && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
   web:
     build: ./frontend

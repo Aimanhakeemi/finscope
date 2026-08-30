@@ -7,10 +7,14 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import settings
 from app.db import SessionLocal
+from app.routes.analytics import router as analytics_router
+from app.routes.imports import router as imports_router
+from app.routes.transactions import router as transactions_router
 from app.seed import seed_demo_user
 
 logger = logging.getLogger(__name__)
@@ -27,6 +31,15 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="FinScope API", version="0.1.0", lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.include_router(imports_router)
+app.include_router(transactions_router)
+app.include_router(analytics_router)
 
 
 @app.get("/healthz")
