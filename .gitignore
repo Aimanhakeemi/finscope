@@ -16,6 +16,9 @@ dist/
 # Env / secrets
 .env
 
+# Local dev database (SQLite fallback when not using docker/Postgres)
+*.db
+
 # Data (regenerate with data/generate_synthetic.py) — keep the labels contract only
 data/*.csv
 !data/.gitkeep
