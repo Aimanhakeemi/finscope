@@ -124,6 +124,35 @@ export interface AlertsResponse {
   alerts: Alert[];
 }
 
+export interface AskResponse {
+  question: string;
+  sql: string;
+  columns: string[];
+  rows: Record<string, unknown>[];
+  truncated: boolean;
+}
+
+export interface ForecastValue {
+  point: number;
+  low: number;
+  high: number;
+}
+
+export interface CategoryForecast {
+  category: Category;
+  point: number;
+  low: number;
+  high: number;
+}
+
+export interface ForecastResponse {
+  as_of: string;
+  method: "ets" | "seasonal_naive" | "trailing_median";
+  next_month: string;
+  total_spend: ForecastValue;
+  by_category: CategoryForecast[];
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -203,4 +232,16 @@ export async function listSubscriptions(): Promise<SubscriptionsResponse> {
 export async function listAlerts(from?: string): Promise<AlertsResponse> {
   const suffix = from ? `?from=${encodeURIComponent(from)}` : "";
   return request<AlertsResponse>(`/api/alerts${suffix}`);
+}
+
+export async function askQuestion(question: string): Promise<AskResponse> {
+  return request<AskResponse>("/api/ask", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+  });
+}
+
+export async function getForecast(): Promise<ForecastResponse> {
+  return request<ForecastResponse>("/api/forecast");
 }

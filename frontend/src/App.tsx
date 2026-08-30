@@ -2,6 +2,7 @@ import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import ImportPage from "./pages/Import";
 import Alerts from "./pages/Alerts";
+import Ask from "./pages/Ask";
 import Subscriptions from "./pages/Subscriptions";
 
 export default function App() {
@@ -16,6 +17,7 @@ export default function App() {
               <Link to="/import" className="hover:text-white">Import</Link>
               <Link to="/subscriptions" className="hover:text-white">Subscriptions</Link>
               <Link to="/alerts" className="hover:text-white">Alerts</Link>
+              <Link to="/ask" className="hover:text-white">Ask</Link>
             </div>
           </div>
         </nav>
@@ -25,6 +27,7 @@ export default function App() {
             <Route path="/import" element={<ImportPage />} />
             <Route path="/subscriptions" element={<Subscriptions />} />
             <Route path="/alerts" element={<Alerts />} />
+            <Route path="/ask" element={<Ask />} />
           </Routes>
         </main>
       </div>

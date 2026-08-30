@@ -9,7 +9,11 @@ Guardrails (see docs/ARCHITECTURE.md #6):
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
+
+from sqlalchemy import text
 
 ALLOWED_RELATION = "v_readonly_transactions"
 MAX_ROWS = 500
@@ -40,7 +44,7 @@ A: SELECT merchant, -SUM(amount) AS spent FROM {ALLOWED_RELATION}
 @dataclass(frozen=True)
 class AskResult:
     sql: str
-    rows: list[dict]
+    rows: list[dict[str, Any]]
     columns: list[str]
 
 
@@ -84,17 +88,49 @@ def validate_sql(sql: str) -> str:
 
     tree = statements[0]
     for table in tree.find_all(exp.Table):
-        if table.name != ALLOWED_RELATION:
+        if table.name.lower() != ALLOWED_RELATION or table.db or table.catalog:
             raise GuardrailError(f"disallowed relation: {table.name}")
 
+    for function in tree.find_all(exp.Anonymous):
+        if function.name.lower() == "pg_sleep":
+            raise GuardrailError("disallowed function: pg_sleep")
+
     limit = tree.args.get("limit")
-    if limit is None or int(limit.expression.this) > MAX_ROWS:
+    if limit is None:
         tree.set("limit", exp.Limit(expression=exp.Literal.number(MAX_ROWS)))
+    else:
+        expression = limit.expression
+        if not isinstance(expression, exp.Literal) or not expression.is_int:
+            raise GuardrailError("LIMIT must be an integer")
+        try:
+            requested = int(expression.this)
+        except (TypeError, ValueError) as exc:
+            raise GuardrailError("LIMIT must be an integer") from exc
+        if requested < 0 or requested > MAX_ROWS:
+            tree.set("limit", exp.Limit(expression=exp.Literal.number(MAX_ROWS)))
 
     return tree.sql(dialect="postgres")
 
 
-def ask(question: str, run_query) -> AskResult:
+def run_readonly(sql: str) -> tuple[list[str], list[dict[str, Any]]]:
+    """Execute validated SQL with the restricted database engine."""
+    from app.db import create_readonly_engine
+
+    readonly_engine = create_readonly_engine()
+    try:
+        with readonly_engine.connect() as connection:
+            result = connection.execute(text(sql))
+            columns = list(result.keys())
+            rows = [dict(row._mapping) for row in result]
+            return columns, rows
+    finally:
+        readonly_engine.dispose()
+
+
+def ask(
+    question: str,
+    run_query: Callable[[str], tuple[list[str], list[dict[str, Any]]]],
+) -> AskResult:
     """`run_query(sql) -> (columns, rows)` executes as the read-only role."""
     sql = validate_sql(generate_sql(question))
     columns, rows = run_query(sql)

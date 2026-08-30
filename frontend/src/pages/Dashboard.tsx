@@ -1,19 +1,22 @@
 import { useEffect, useState } from "react";
-import { getSummary, listTransactions, updateTransactionCategory, type Category, type Summary, type Transaction } from "../api/client";
+import { getForecast, getSummary, listTransactions, updateTransactionCategory, type Category, type ForecastResponse, type Summary, type Transaction } from "../api/client";
 import CategoryBarChart from "../components/CategoryBarChart";
 import DataTable from "../components/DataTable";
+import ForecastCard from "../components/ForecastCard";
 import MonthlyTrendChart from "../components/MonthlyTrendChart";
 
 export default function Dashboard() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [forecast, setForecast] = useState<ForecastResponse | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    void Promise.all([getSummary(), listTransactions({ limit: 100, sort: "-date" })])
-      .then(([nextSummary, nextTransactions]) => {
+    void Promise.all([getSummary(), listTransactions({ limit: 100, sort: "-date" }), getForecast()])
+      .then(([nextSummary, nextTransactions, nextForecast]) => {
         setSummary(nextSummary);
         setTransactions(nextTransactions.transactions);
+        setForecast(nextForecast);
       })
       .catch((cause) => setError(cause instanceof Error ? cause.message : "Dashboard failed to load."));
   }, []);
@@ -48,6 +51,7 @@ export default function Dashboard() {
         <CategoryBarChart data={summary.by_category} />
         <MonthlyTrendChart data={summary.monthly} />
       </div>
+      {forecast && <ForecastCard data={forecast} />}
       <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
         <h2 className="mb-4 text-lg font-medium">Top merchants</h2>
         <div className="space-y-3">

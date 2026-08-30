@@ -1,0 +1,136 @@
+- question: How many transactions are there?
+  gold_sql: SELECT COUNT(*) AS count FROM v_readonly_transactions
+  gold_result:
+    - count: 13
+- question: What is the net amount in the account?
+  gold_sql: SELECT SUM(amount) AS total FROM v_readonly_transactions
+  gold_result:
+    - total: 4836
+- question: How much did I spend in total?
+  gold_sql: SELECT -SUM(amount) AS spent FROM v_readonly_transactions WHERE amount < 0
+  gold_result:
+    - spent: 1164
+- question: How much did I spend on coffee?
+  gold_sql: SELECT -SUM(amount) AS spent FROM v_readonly_transactions WHERE category = 'coffee' AND amount < 0
+  gold_result:
+    - spent: 35
+- question: How many coffee transactions are there?
+  gold_sql: SELECT COUNT(*) AS count FROM v_readonly_transactions WHERE category = 'coffee'
+  gold_result:
+    - count: 5
+- question: How much income was deposited?
+  gold_sql: SELECT SUM(amount) AS income FROM v_readonly_transactions WHERE amount > 0
+  gold_result:
+    - income: 6000
+- question: What is the earliest transaction date?
+  gold_sql: SELECT MIN(txn_date) AS first_date FROM v_readonly_transactions
+  gold_result:
+    - first_date: '2026-01-05'
+- question: What is the latest transaction date?
+  gold_sql: SELECT MAX(txn_date) AS last_date FROM v_readonly_transactions
+  gold_result:
+    - last_date: '2026-08-15'
+- question: What is the largest outgoing charge?
+  gold_sql: SELECT MIN(amount) AS largest_charge FROM v_readonly_transactions WHERE amount < 0
+  gold_result:
+    - largest_charge: -1000
+- question: What is the largest deposit?
+  gold_sql: SELECT MAX(amount) AS largest_deposit FROM v_readonly_transactions WHERE amount > 0
+  gold_result:
+    - largest_deposit: 3000
+- question: What is the average coffee charge?
+  gold_sql: SELECT AVG(amount) AS average FROM v_readonly_transactions WHERE category = 'coffee'
+  gold_result:
+    - average: -7.0
+- question: How much did I spend in January?
+  gold_sql: SELECT -SUM(amount) AS spent FROM v_readonly_transactions WHERE txn_date >= '2026-01-01' AND txn_date < '2026-02-01' AND amount < 0
+  gold_result:
+    - spent: 25
+- question: How much did I spend in February?
+  gold_sql: SELECT -SUM(amount) AS spent FROM v_readonly_transactions WHERE txn_date >= '2026-02-01' AND txn_date < '2026-03-01' AND amount < 0
+  gold_result:
+    - spent: 22
+- question: How many non-recurring transactions are there?
+  gold_sql: SELECT COUNT(*) AS count FROM v_readonly_transactions WHERE is_recurring = FALSE
+  gold_result:
+    - count: 10
+- question: How many recurring transactions are there?
+  gold_sql: SELECT COUNT(*) AS count FROM v_readonly_transactions WHERE is_recurring = TRUE
+  gold_result:
+    - count: 3
+- question: How much did recurring charges cost?
+  gold_sql: SELECT -SUM(amount) AS spent FROM v_readonly_transactions WHERE is_recurring = TRUE AND amount < 0
+  gold_result:
+    - spent: 1034
+- question: How many transactions does each merchant have?
+  gold_sql: SELECT merchant, COUNT(*) AS count FROM v_readonly_transactions GROUP BY merchant ORDER BY merchant
+  gold_result:
+    - merchant: NETFLIX
+      count: 2
+    - merchant: RENT
+      count: 1
+    - merchant: SALARY
+      count: 2
+    - merchant: STARBUCKS
+      count: 5
+    - merchant: TARGET
+      count: 1
+    - merchant: WHOLE FOODS
+      count: 2
+- question: Which merchants cost the most?
+  gold_sql: SELECT merchant, -SUM(amount) AS spent FROM v_readonly_transactions WHERE amount < 0 GROUP BY merchant ORDER BY spent DESC LIMIT 2
+  gold_result:
+    - merchant: RENT
+      spent: 1000
+    - merchant: TARGET
+      spent: 50
+- question: How many transactions are in each category?
+  gold_sql: SELECT category, COUNT(*) AS count FROM v_readonly_transactions GROUP BY category ORDER BY category
+  gold_result:
+    - category: coffee
+      count: 5
+    - category: groceries
+      count: 2
+    - category: income
+      count: 2
+    - category: rent_mortgage
+      count: 1
+    - category: shopping
+      count: 1
+    - category: subscriptions
+      count: 2
+- question: Which transactions are recurring?
+  gold_sql: SELECT merchant FROM v_readonly_transactions WHERE is_recurring = TRUE ORDER BY merchant
+  gold_result:
+    - merchant: NETFLIX
+    - merchant: NETFLIX
+    - merchant: RENT
+- question: How many deposits are there?
+  gold_sql: SELECT COUNT(*) AS count FROM v_readonly_transactions WHERE amount > 0
+  gold_result:
+    - count: 2
+- question: What was my net amount in June?
+  gold_sql: SELECT SUM(amount) AS total FROM v_readonly_transactions WHERE txn_date >= '2026-06-01' AND txn_date < '2026-07-01'
+  gold_result:
+    - total: 2950
+- question: What was my smallest coffee charge?
+  gold_sql: SELECT MIN(amount) AS smallest FROM v_readonly_transactions WHERE category = 'coffee'
+  gold_result:
+    - smallest: -9
+- question: Show my Starbucks charges.
+  gold_sql: SELECT txn_date, amount FROM v_readonly_transactions WHERE merchant = 'STARBUCKS' ORDER BY txn_date
+  gold_result:
+    - txn_date: '2026-01-05'
+      amount: -5
+    - txn_date: '2026-02-05'
+      amount: -6
+    - txn_date: '2026-03-05'
+      amount: -7
+    - txn_date: '2026-05-05'
+      amount: -8
+    - txn_date: '2026-08-05'
+      amount: -9
+- question: How much did groceries cost?
+  gold_sql: SELECT -SUM(amount) AS spent FROM v_readonly_transactions WHERE category = 'groceries' AND amount < 0
+  gold_result:
+    - spent: 45

@@ -14,6 +14,8 @@ from app.config import settings
 from app.db import SessionLocal
 from app.routes.alerts import router as alerts_router
 from app.routes.analytics import router as analytics_router
+from app.routes.ask import router as ask_router
+from app.routes.forecast import router as forecast_router
 from app.routes.imports import router as imports_router
 from app.routes.subscriptions import router as subscriptions_router
 from app.routes.transactions import router as transactions_router
@@ -44,6 +46,8 @@ app.include_router(transactions_router)
 app.include_router(analytics_router)
 app.include_router(subscriptions_router)
 app.include_router(alerts_router)
+app.include_router(ask_router)
+app.include_router(forecast_router)
 
 
 @app.get("/healthz")
