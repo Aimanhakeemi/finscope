@@ -119,6 +119,16 @@ panel with a section eyebrow ("SPEND BY CATEGORY", "MONTHLY TREND") — no round
 shadowed card, just `1px --rule` and 4px radius. Then "TOP MERCHANTS" as a ledger
 table (see below). Then the forecast card, same panel treatment.
 
+Chart plot containers use an explicit height so Recharts can resolve its
+`ResponsiveContainer`: 300px at desktop widths and 260px below 840px.
+
+### Transactions page
+
+The dashboard shows the 10 most recent transactions, with a `10 most recent`
+caption and a `View all transactions →` link. The `/transactions` page is the
+full ledger: it displays 50 rows per page, keeps inline category editing, and
+provides category, recurring, anomaly, and date-range filters above the table.
+
 ### Charts (Recharts restyle)
 - Colors from tokens only. Income line `--ledger`, spend line `--flag`.
 - Gridlines `--rule`, 1px. Axis text: IBM Plex Mono 11px `--ink-soft`.

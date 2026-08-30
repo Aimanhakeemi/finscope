@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { getForecast, getSummary, listTransactions, updateTransactionCategory, type Category, type ForecastResponse, type Summary, type Transaction } from "../api/client";
 import CategoryBarChart from "../components/CategoryBarChart";
 import DataTable from "../components/DataTable";
@@ -88,7 +89,7 @@ export default function Dashboard() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    void Promise.all([getSummary(), listTransactions({ limit: 100, sort: "-date" }), getForecast()])
+    void Promise.all([getSummary(), listTransactions({ limit: 10, sort: "-date" }), getForecast()])
       .then(([nextSummary, nextTransactions, nextForecast]) => {
         setSummary(nextSummary);
         setTransactions(nextTransactions.transactions);
@@ -143,8 +144,12 @@ export default function Dashboard() {
       </section>
       {forecast && <ForecastCard data={forecast} />}
       <section>
-        <h2 className="section-eyebrow spacer-heading">Recent transactions</h2>
+        <div className="table-section__header">
+          <h2 className="section-eyebrow spacer-heading">Recent transactions</h2>
+          <span className="caption">10 most recent</span>
+        </div>
         <DataTable transactions={transactions} onCategoryChange={changeCategory} />
+        <Link to="/transactions" className="inline-link">View all transactions →</Link>
       </section>
     </section>
   );

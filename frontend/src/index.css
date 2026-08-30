@@ -340,7 +340,7 @@ a {
 }
 
 .chart-panel__plot {
-  min-height: 280px;
+  height: 300px;
   margin-top: 16px;
 }
 
@@ -758,12 +758,67 @@ a {
   margin: 0 0 12px;
 }
 
+.table-section__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.inline-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--ledger);
+  font-size: 14px;
+  text-decoration: none;
+  transition: color 120ms ease;
+}
+
+.inline-link:hover {
+  color: var(--ink);
+}
+
+.transaction-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.transaction-filters__grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pagination__summary {
+  margin: 0;
+  color: var(--ink-soft);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-feature-settings: "tnum";
+}
+
 @media (max-width: 840px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
 
   .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .chart-panel__plot {
+    height: 260px;
+  }
+
+  .transaction-filters__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -837,6 +892,15 @@ a {
 
   .forecast-panel__value {
     text-align: left;
+  }
+
+  .transaction-filters__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pagination {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 

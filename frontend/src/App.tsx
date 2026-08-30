@@ -5,6 +5,7 @@ import Ask from "./pages/Ask";
 import Dashboard from "./pages/Dashboard";
 import ImportPage from "./pages/Import";
 import Subscriptions from "./pages/Subscriptions";
+import Transactions from "./pages/Transactions";
 
 type Theme = "light" | "dark";
 
@@ -43,6 +44,9 @@ function Shell() {
             <NavLink to="/import" className={({ isActive }) => `nav-link${isActive ? " nav-link--active" : ""}`}>
               Import
             </NavLink>
+            <NavLink to="/transactions" className={({ isActive }) => `nav-link${isActive ? " nav-link--active" : ""}`}>
+              Transactions
+            </NavLink>
             <NavLink to="/subscriptions" className={({ isActive }) => `nav-link${isActive ? " nav-link--active" : ""}`}>
               Subscriptions
             </NavLink>
@@ -68,6 +72,7 @@ function Shell() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/import" element={<ImportPage />} />
+            <Route path="/transactions" element={<Transactions />} />
             <Route path="/subscriptions" element={<Subscriptions />} />
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/ask" element={<Ask />} />
