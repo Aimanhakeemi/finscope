@@ -53,6 +53,7 @@ def generate_sql(question: str) -> str:
         raise GuardrailError("LLM features disabled (no ANTHROPIC_API_KEY)")
 
     from anthropic import Anthropic
+    from anthropic.types import TextBlock
 
     client = Anthropic()
     msg = client.messages.create(
@@ -62,7 +63,10 @@ def generate_sql(question: str) -> str:
         system=SCHEMA_PROMPT,
         messages=[{"role": "user", "content": question}],
     )
-    return msg.content[0].text.strip().rstrip(";")
+    block = msg.content[0] if msg.content else None
+    if not isinstance(block, TextBlock):
+        raise GuardrailError("unexpected non-text response from the model")
+    return block.text.strip().rstrip(";")
 
 
 def validate_sql(sql: str) -> str:

@@ -77,6 +77,7 @@ class Categorizer:
 def _llm_classify(description: str, amount: float) -> Prediction:
     """Fallback to Claude for low-confidence rows. See docs/ML.md for the prompt."""
     from anthropic import Anthropic
+    from anthropic.types import TextBlock
 
     client = Anthropic()
     msg = client.messages.create(
@@ -89,7 +90,8 @@ def _llm_classify(description: str, amount: float) -> Prediction:
         ),
         messages=[{"role": "user", "content": f"{description!r} amount {amount:.2f}"}],
     )
-    label = msg.content[0].text.strip().lower()
+    block = msg.content[0] if msg.content else None
+    label = block.text.strip().lower() if isinstance(block, TextBlock) else "other"
     if label not in TAXONOMY:
         label = "other"
     return Prediction(label, 0.5, "llm")
