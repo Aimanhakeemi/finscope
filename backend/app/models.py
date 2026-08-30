@@ -54,7 +54,6 @@ Category = Enum(
 )
 CategorySource = Enum(
     "model",
-    "llm",
     "rule",
     "user",
     name="category_source_enum",

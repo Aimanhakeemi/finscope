@@ -37,7 +37,7 @@ majority of consumer statement volume.
 | amount | numeric(12,2) | negative = money out, positive = money in |
 | category | text | one of the taxonomy values |
 | category_confidence | real | 0–1; model probability or 1.0 for rule/user |
-| category_source | text | `model` \| `llm` \| `rule` \| `user` |
+| category_source | text | `model` \| `rule` \| `user` |
 | is_recurring | bool | set by `recurring.py` |
 | recurring_group_id | uuid FK → recurring_groups, null | |
 | is_anomaly | bool | set by `anomaly.py` |

@@ -12,7 +12,7 @@ roles:
 | --- | --- |
 | **Software Engineer** | REST API, relational schema, migrations, auth, tests, Docker, CI/CD, typed frontend |
 | **Data Analyst** | ETL pipeline, exploratory analysis, recurring-payment detection, anomaly detection, time-series forecasting, dashboards |
-| **AI Engineer** | Text-classification model, LLM-assisted categorization with confidence routing, natural-language → SQL, an offline evaluation harness with metrics |
+| **AI Engineer** | Local text-classification model, natural-language → SQL, and an offline evaluation harness with metrics |
 
 ---
 
@@ -43,7 +43,7 @@ flowchart LR
     CSV["Bank CSV\n(date, description, amount)"] --> API
     subgraph API["FastAPI backend (Python)"]
         ETL["ETL / normalize\n(pandas)"]
-        CAT["Categorizer\nsklearn model + LLM fallback"]
+        CAT["Categorizer\nrules + sklearn model"]
         REC["Recurring detector\n(periodicity analysis)"]
         ANOM["Anomaly detector\n(robust z-score / IQR)"]
         FC["Forecaster\n(statsmodels)"]
@@ -51,7 +51,6 @@ flowchart LR
     end
     API --> DB[("PostgreSQL")]
     DB --> WEB["React + TypeScript\ndashboard (Recharts)"]
-    CAT -. low confidence .-> LLM["Claude API"]
     NLQ --> LLM
     EVAL["Evaluation harness\n(metrics + reports)"] -.reads.-> DB
 ```
@@ -66,7 +65,7 @@ Full detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | --- | --- | --- |
 | Backend API | **Python 3.11 + FastAPI** | Same language as the ML/data code; async; auto OpenAPI docs |
 | Data / ML | **pandas, scikit-learn, statsmodels** | Standard analyst + ML toolkit; light enough to run in CI |
-| LLM | **Anthropic Claude API** (`anthropic` SDK) | Categorization fallback + natural-language→SQL |
+| LLM | **Anthropic Claude API** (`anthropic` SDK) | Natural-language→SQL only |
 | Database | **PostgreSQL 16** | Real SQL for the NL→SQL feature and window-function analytics |
 | Migrations | **Alembic** | Versioned schema |
 | Frontend | **React + TypeScript + Vite + Recharts + Tailwind** | Typed UI, fast dev server, charts without a heavy BI dep |
@@ -130,7 +129,7 @@ finscope/
 │   ├── app/
 │   │   ├── main.py            # FastAPI app + routes
 │   │   ├── recurring.py       # recurring-payment detection (implemented)
-│   │   ├── categorize.py      # ML + LLM categorization (skeleton)
+│   │   ├── categorize.py      # local rules + ML categorization
 │   │   ├── anomaly.py         # anomaly detection (skeleton)
 │   │   └── nlq.py             # natural-language → SQL (skeleton)
 │   └── tests/

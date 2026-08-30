@@ -49,7 +49,7 @@ export interface Transaction {
   amount: number;
   category: Category;
   category_confidence: number;
-  category_source: "model" | "llm" | "rule" | "user";
+  category_source: "model" | "rule" | "user";
   is_recurring: boolean;
   recurring_group_id: string | null;
   is_anomaly: boolean;

@@ -72,8 +72,8 @@ Read first: `README.md`, `docs/PRD.md`, `docs/ARCHITECTURE.md`, `docs/API_SPEC.m
 
 **Tests**
 - `test_etl.py` — date formats, debit/credit columns, dedupe, bad input → 400
-- `test_categorize.py` — rules fire; model path; low-confidence path with a **mocked**
-  anthropic client; taxonomy-only outputs
+- `test_categorize.py` — rules fire; model path; low-confidence rows remain local
+  model predictions; taxonomy-only outputs
 - `test_imports_api.py`, `test_analytics_api.py`
 - `Import.test.tsx` — renders, submits, shows summary (mock fetch)
 
@@ -117,7 +117,7 @@ Read first: `README.md`, `docs/PRD.md`, `docs/ARCHITECTURE.md`, `docs/API_SPEC.m
 ## M3 — NL→SQL + forecast
 
 **Files**
-- `backend/migrations/versions/0002_readonly_role.py` — `v_readonly_transactions`,
+- `backend/migrations/versions/0003_readonly_role.py` — `v_readonly_transactions`,
   `finscope_readonly` role + grants + `statement_timeout`
 - `backend/app/nlq.py` — finish: `generate_sql`, `validate_sql` (sqlglot guardrail),
   `run_readonly(sql) -> (columns, rows)` using the read-only engine

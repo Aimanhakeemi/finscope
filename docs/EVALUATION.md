@@ -31,7 +31,7 @@ Steps:
 | --- | --- | --- |
 | Categorizer | accuracy | ≥ 0.90 |
 | Categorizer | macro-F1 | ≥ 0.85 |
-| Categorizer | LLM-call rate | reported (target ≤ 0.15) |
+| Categorizer | manual-review rate | reported |
 | Recurring detector | precision | ≥ 0.85 |
 | Recurring detector | recall | ≥ 0.80 |
 | Anomaly detector | precision | ≥ 0.70 |
@@ -42,8 +42,8 @@ Steps:
 
 ## Ablations worth showing in the report
 
-- Categorizer: rules-only vs. model-only vs. model+LLM router — accuracy and cost.
-- Confidence threshold sweep (0.4 → 0.7) → accuracy vs. LLM-call rate curve.
+- Categorizer: rules-only vs. local-model-only — accuracy and review rate.
+- Confidence threshold sweep (0.4 → 0.7) → accuracy vs. manual-review rate curve.
 - Recurring detector: effect of the amount-stability filter on precision.
 
 ## CI integration

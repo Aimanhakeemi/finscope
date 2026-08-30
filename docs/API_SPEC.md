@@ -57,9 +57,12 @@ instead of `amount`.
   "rows_deduped": 22,
   "date_range": ["2025-09-01", "2026-08-01"],
   "category_breakdown": { "groceries": 61, "coffee": 88, "…": 0 },
-  "llm_fallback_count": 12
+  "llm_fallback_count": 0
 }
 ```
+
+`llm_fallback_count` is retained for response compatibility and is always `0`.
+Categorization uses rules and the local model only.
 
 **400** — missing required columns, unparseable CSV, file too large, 0 valid rows.
 

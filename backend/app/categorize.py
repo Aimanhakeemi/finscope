@@ -1,11 +1,10 @@
-"""Transaction categorizer: local sklearn model + rules + optional Claude fallback.
+"""Transaction categorizer: local sklearn model plus deterministic rules.
 
 Skeleton — the training / persistence details live in docs/ML.md. The public
 surface is `categorize_many(descriptions, amounts) -> list[Prediction]`.
 """
 from __future__ import annotations
 
-import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -44,7 +43,7 @@ DEFAULT_MODEL_PATH = Path(__file__).resolve().parent / "artifacts" / "categorize
 class Prediction:
     category: str
     confidence: float
-    source: str  # "rule" | "model" | "llm"
+    source: str  # "rule" | "model"
 
 
 def _rule_match(description: str) -> str | None:
@@ -111,33 +110,7 @@ class Categorizer:
         classifier = model.named_steps["classifier"] if hasattr(model, "named_steps") else model
         category = str(classifier.classes_[idx])
 
-        if top_p >= CONFIDENCE_THRESHOLD or not os.getenv("ANTHROPIC_API_KEY"):
-            return Prediction(category, top_p, "model")
-
-        return _llm_classify(description, amount)
-
-
-def _llm_classify(description: str, amount: float) -> Prediction:
-    """Fallback to Claude for low-confidence rows. See docs/ML.md for the prompt."""
-    from anthropic import Anthropic
-    from anthropic.types import TextBlock
-
-    client = Anthropic()
-    msg = client.messages.create(
-        model=os.getenv("FINSCOPE_LLM_MODEL", "claude-haiku-4-5-20251001"),
-        max_tokens=16,
-        temperature=0,
-        system=(
-            "You label bank transactions. Reply with EXACTLY one of: "
-            + ", ".join(TAXONOMY)
-        ),
-        messages=[{"role": "user", "content": f"{description!r} amount {amount:.2f}"}],
-    )
-    block = msg.content[0] if msg.content else None
-    label = block.text.strip().lower() if isinstance(block, TextBlock) else "other"
-    if label not in TAXONOMY:
-        label = "other"
-    return Prediction(label, 0.5, "llm")
+        return Prediction(category, top_p, "model")
 
 
 def categorize_many(

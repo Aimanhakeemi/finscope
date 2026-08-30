@@ -1,6 +1,6 @@
 # FinScope — Database Schema (authoritative DDL)
 
-Target: PostgreSQL 16. Managed with Alembic; migration `0001_initial` should produce
+Target: PostgreSQL 16. Managed with Alembic; the migration chain should produce
 exactly this. UUIDs via `gen_random_uuid()` (`pgcrypto`), enable it in the migration.
 
 ```sql
@@ -31,7 +31,7 @@ CREATE TYPE category_enum AS ENUM (
     'rent_mortgage','subscriptions','shopping','health','entertainment',
     'income','other'
 );
-CREATE TYPE category_source_enum AS ENUM ('model','llm','rule','user');
+CREATE TYPE category_source_enum AS ENUM ('model','rule','user');
 CREATE TYPE cadence_enum AS ENUM ('weekly','biweekly','monthly','quarterly','annual');
 
 -- ─────────────────────────────────────────────────────────────

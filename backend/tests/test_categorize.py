@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
-from anthropic.types import TextBlock
 from app.categorize import TAXONOMY, Categorizer
 
 
@@ -41,7 +39,7 @@ def test_model_path_predicts_a_taxonomy_category(tmp_path):
     assert 0 <= prediction.confidence <= 1
 
 
-def test_low_confidence_uses_mocked_llm_and_invalid_labels_become_other(monkeypatch):
+def test_low_confidence_stays_with_local_model():
     categorizer = Categorizer("unused.joblib")
     categorizer._model = SimpleNamespace(
         predict_proba=lambda _values: np.array([[0.2, 0.2, 0.2, 0.2, 0.2]]),
@@ -51,12 +49,7 @@ def test_low_confidence_uses_mocked_llm_and_invalid_labels_become_other(monkeypa
             )
         },
     )
-    response = SimpleNamespace(content=[TextBlock(type="text", text="not-a-category")])
-    client = Mock()
-    client.messages.create.return_value = response
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
-    monkeypatch.setattr("anthropic.Anthropic", lambda: client)
     prediction = categorizer.predict_one("ambiguous merchant", -11)
-    assert prediction.category == "other"
-    assert prediction.source == "llm"
-    client.messages.create.assert_called_once()
+    assert prediction.category == "coffee"
+    assert prediction.confidence == 0.2
+    assert prediction.source == "model"

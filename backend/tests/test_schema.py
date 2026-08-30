@@ -58,7 +58,7 @@ def test_postgres_schema_dump_matches_contract(postgres_connection):
             "income",
             "other",
         ],
-        "category_source_enum": ["model", "llm", "rule", "user"],
+        "category_source_enum": ["model", "rule", "user"],
         "cadence_enum": ["weekly", "biweekly", "monthly", "quarterly", "annual"],
     }
 

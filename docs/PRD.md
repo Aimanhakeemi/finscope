@@ -42,7 +42,7 @@ Existing tools require manual categorization or a bank login most people are war
 | F1 | Accept CSV with headers mappable to `date`, `description`, `amount`; support common bank variants via a column-mapping step |
 | F2 | Normalize: parse dates, sign amounts (debits negative), strip merchant noise ("SQ *", store numbers, city/state) |
 | F3 | Deduplicate on `(date, normalized_description, amount)` within an import and across imports |
-| F4 | Categorize into a fixed taxonomy (see DATA_DICTIONARY); store category + confidence + source (`model` \| `llm` \| `rule` \| `user`) |
+| F4 | Categorize into a fixed taxonomy (see DATA_DICTIONARY); store category + confidence + source (`model` \| `rule` \| `user`) |
 | F5 | User can correct a category; corrections are persisted and used as future training labels |
 | F6 | Recurring detection groups transactions by merchant and finds stable inter-arrival periods (weekly/biweekly/monthly/quarterly/annual) |
 | F7 | Anomaly detection per category using robust statistics; also flag first-time large merchants |
@@ -53,8 +53,8 @@ Existing tools require manual categorization or a bank login most people are war
 ## 6. Quality / non-functional
 
 - Deterministic tests (seeded synthetic data, pinned model artifact).
-- LLM features degrade gracefully: if `ANTHROPIC_API_KEY` is absent, categorization
-  uses model+rules only and NL→SQL returns a clear "LLM disabled" message.
+- Categorization always uses model+rules only; if `ANTHROPIC_API_KEY` is absent,
+  NL→SQL returns a clear "LLM disabled" message.
 - NL→SQL runs only `SELECT` against a whitelisted read-only role; queries are
   timeout- and row-limited.
 - No secrets in the repo; `.env.example` documents all config.

@@ -20,24 +20,27 @@ Multi-class classification: transaction description → one of 12 categories.
 - Persisted to `backend/app/artifacts/categorizer.joblib`; version + training date
   recorded in a sidecar JSON.
 
-### Confidence routing
+### Confidence and manual review
+
 ```
 p = model.predict_proba(x).max()
 if merchant matches a rule        -> category = rule,  source = "rule",  conf = 1.0
-elif p >= 0.55                    -> category = model, source = "model", conf = p
-elif ANTHROPIC_API_KEY present    -> Claude classifies, source = "llm"
-else                             -> category = model best guess, source = "model"
+else                              -> category = model best guess, source = "model", conf = p
 ```
-The 0.55 threshold is tuned on the eval fixture to trade off accuracy against
-LLM-call rate (reported in the eval report).
 
-### LLM fallback prompt (sketch)
-System: "You label bank transactions. Reply with exactly one of: <taxonomy>."
-User: the merchant string + amount + a few in-context examples.
-Model: `claude-sonnet-5` (or `claude-haiku-4-5` for cost). Temperature 0.
+The `0.55` `CONFIDENCE_THRESHOLD` is a review threshold, not a routing decision.
+Rows with `confidence < 0.55` remain model predictions and can be surfaced in the
+UI for manual review. User corrections are persisted as training labels for the
+next local model retrain.
+
+### LLM boundary
+
+Categorization is rules plus a local scikit-learn model only. It never calls Claude.
+Claude is reserved for the natural-language query feature, where its use is
+auditable and limited to generating a read-only SQL query.
 
 ### Metrics
-Accuracy, macro-F1, per-class precision/recall, confusion matrix, LLM-call rate.
+Accuracy, macro-F1, per-class precision/recall, confusion matrix, manual-review rate.
 Targets: accuracy ≥ 0.90, macro-F1 ≥ 0.85.
 
 ### Known limitations
@@ -102,5 +105,5 @@ Target: execution accuracy ≥ 0.80.
 ## 6. Responsible use notes
 - FinScope describes past spending and simple projections. It is **not** financial
   advice and the UI says so.
-- Only descriptions + amounts leave the machine (when LLM features are on); this is
-  stated in the README and the import screen.
+- Only descriptions + amounts leave the machine when the natural-language query
+  feature is enabled; categorization remains local.

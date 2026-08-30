@@ -39,22 +39,19 @@ compete on *execution quality and the evaluation harness*, not novelty.
 | --- | --- | --- | --- | --- | --- |
 | Pure regex rules | Low–med | Free, instant | Yes | Fine | Breaks on unseen merchants; endless rule maintenance |
 | LLM on every transaction | High | $ per txn, slow, rate limits | No | Fine | Great accuracy, bad for a demo that must run offline and in CI |
-| **Local model (TF-IDF + LogReg) + LLM fallback on low confidence** | Med–high | Cheap; LLM on ~10–15% only | Mostly (model pinned; fallback is the only non-determinism) | Weak until corrections accumulate | *Chosen* |
+| **Rules + local model (TF-IDF + LogReg), no LLM** | Med–high | Free, local, fast | Yes | Weak until corrections accumulate | *Chosen* |
 | Fine-tuned small transformer | High | Training infra, longer CI | Yes | Weak | Overkill for ~2–5k rows; harder to justify in a portfolio review |
 | Sentence-embeddings + kNN | Med–high | Model download (~100MB), fast inference | Yes | Weak | Kept as a **stretch** — swap it in and compare in the eval report |
 
-**Long-form reasoning.** The interesting artifact here is not the model, it is the
-**confidence router**. A pure-rules system has nothing to evaluate. A pure-LLM system
-is trivially "just call the API" and can't run in CI without a key or network. The
-hybrid forces a real engineering decision — *where do you set the confidence
-threshold?* — that has a measurable answer: sweep the threshold, plot accuracy
-against LLM-call rate, pick the knee of the curve, and put that chart in the eval
-report. That single chart demonstrates ML judgement better than a higher headline
-accuracy number would.
+**Long-form reasoning.** Rules handle obvious merchants and the local model handles
+unseen strings. Low-confidence rows are flagged for manual review, and corrections
+become labels for the next retrain. This preserves a deterministic, offline path
+that is straightforward to audit.
 
-**Cost accepted:** one source of non-determinism (the LLM fallback). Mitigated by:
-tests run with `ANTHROPIC_API_KEY` unset (fallback disabled, model-only path), and
-the eval harness reports both "with fallback" and "model-only" numbers.
+The project constraint is deliberate: keeping the LLM auditable and limited to
+natural-language queries means categorization never gains a hidden network or cost
+dependency. The cost accepted is lower confidence on unseen merchants and the
+manual review time needed to improve the training set.
 
 ### B2. Recurring-payment detection
 

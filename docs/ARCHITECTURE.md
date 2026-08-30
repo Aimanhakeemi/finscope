@@ -28,8 +28,6 @@ sequenceDiagram
     A->>A: parse + normalize (pandas)
     A->>A: dedupe against existing rows
     A->>A: categorize each txn (sklearn model)
-    A->>L: categorize low-confidence batch (optional)
-    L-->>A: category + rationale
     A->>DB: INSERT transactions, import summary
     A-->>W: import id + counts
 
@@ -51,7 +49,7 @@ sequenceDiagram
 | Module | Input | Output | Technique |
 | --- | --- | --- | --- |
 | `etl.py` | raw CSV bytes + column mapping | `DataFrame` of clean transactions | pandas; regex merchant cleaning; date parsing; sign normalization |
-| `categorize.py` | clean transactions | category, confidence, source | TF-IDF char n-grams + `LinearSVC`/`LogisticRegression`; rules for obvious merchants; Claude fallback when `p(top) < 0.55` |
+| `categorize.py` | clean transactions | category, confidence, source | TF-IDF char n-grams + `LinearSVC`/`LogisticRegression`; rules for obvious merchants; low-confidence rows surfaced for manual review |
 | `recurring.py` | all transactions for a user | recurring groups (merchant, cadence, amount band, next date) | group by normalized merchant → sort dates → inter-arrival deltas → cadence match with tolerance + amount stability check |
 | `anomaly.py` | transactions + category | flagged transactions with reason | per-category robust z-score (median / MAD) and IQR fence; "new large merchant" heuristic |
 | `forecast.py` | monthly aggregates | next-month point + 80% interval, per category | `statsmodels` ETS / seasonal-naive baseline; fall back to trailing-median when < 6 months |
@@ -83,9 +81,9 @@ Analytics use SQL views:
 **D1 — Modular monolith, not microservices.** Portfolio scope; one language for API +
 ML; simpler to run and review. Revisit only if a component needs independent scaling.
 
-**D2 — Local sklearn model as the primary categorizer, LLM only as fallback.**
-Cost, latency, determinism, and offline demo-ability. The confidence router is
-itself an interesting artifact to evaluate (precision/recall vs. LLM-call rate).
+**D2 — Rules + local sklearn model for categorization; LLM reserved for NL→SQL.**
+This keeps categorization deterministic, auditable, and runnable offline while
+keeping the LLM use auditable and limited to the natural-language query feature.
 
 **D3 — Rule-based recurring detection, not ML.** The signal (regular inter-arrival
 times + stable amount) is explicit and explainable; an ML model here would be
@@ -117,5 +115,5 @@ and the tests deterministic without anyone sharing real financial data.
 ## 8. Observability (lightweight)
 
 - Structured JSON logs from the API.
-- `/healthz` and `/metrics` (request counts, LLM call count, categorizer fallback rate).
+- `/healthz` and `/metrics` (request counts and LLM call count for NL→SQL).
 - The eval harness output (`docs/eval_report.md`) is the model-quality dashboard.
