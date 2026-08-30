@@ -16,10 +16,9 @@ interface Props {
 const formatDollars = (value: number) => `$${Number(value).toLocaleString()}`;
 
 export default function CategoryBarChart({ data }: Props) {
-  // "Spend by category" — outflows only. Income and any other inflow is excluded,
-  // otherwise a single positive category dwarfs the scale.
+  // "Spend by category" — income is not spend.
   const chartData = data
-    .filter((item) => item.total < 0)
+    .filter((item) => item.category !== "income")
     .map((item) => ({
       category: item.category.replace(/_/g, " "),
       spent: Math.abs(item.total),
@@ -40,7 +39,7 @@ export default function CategoryBarChart({ data }: Props) {
           <YAxis
             dataKey="category"
             type="category"
-            width={120}
+            width={150}
             interval={0}
             tickLine={false}
             stroke="#94a3b8"
