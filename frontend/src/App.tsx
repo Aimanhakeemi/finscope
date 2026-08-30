@@ -1,27 +1,70 @@
-import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
-import Dashboard from "./pages/Dashboard";
-import ImportPage from "./pages/Import";
+import { useEffect, useState } from "react";
+import { BrowserRouter, Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import Alerts from "./pages/Alerts";
 import Ask from "./pages/Ask";
+import Dashboard from "./pages/Dashboard";
+import ImportPage from "./pages/Import";
 import Subscriptions from "./pages/Subscriptions";
 
-export default function App() {
+type Theme = "light" | "dark";
+
+const THEME_STORAGE_KEY = "finscope-theme";
+
+function readTheme(): Theme {
+  try {
+    return localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+}
+
+function Shell() {
+  const location = useLocation();
+  const [theme, setTheme] = useState<Theme>(readTheme);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // Theme still works when storage is unavailable.
+    }
+  }, [theme]);
+
   return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-slate-950 text-slate-100">
-        <nav className="border-b border-slate-800 bg-slate-950/90">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-            <Link to="/" className="text-xl font-semibold">FinScope</Link>
-            <div className="flex gap-5 text-sm text-slate-300">
-              <Link to="/" className="hover:text-white">Dashboard</Link>
-              <Link to="/import" className="hover:text-white">Import</Link>
-              <Link to="/subscriptions" className="hover:text-white">Subscriptions</Link>
-              <Link to="/alerts" className="hover:text-white">Alerts</Link>
-              <Link to="/ask" className="hover:text-white">Ask</Link>
-            </div>
-          </div>
-        </nav>
-        <main className="mx-auto max-w-7xl px-6 py-8">
+    <>
+      <header className="masthead">
+        <div className="masthead__inner">
+          <Link to="/" className="wordmark">FinScope</Link>
+          <nav className="masthead__nav" aria-label="Primary navigation">
+            <NavLink to="/" end className={({ isActive }) => `nav-link${isActive ? " nav-link--active" : ""}`}>
+              Dashboard
+            </NavLink>
+            <NavLink to="/import" className={({ isActive }) => `nav-link${isActive ? " nav-link--active" : ""}`}>
+              Import
+            </NavLink>
+            <NavLink to="/subscriptions" className={({ isActive }) => `nav-link${isActive ? " nav-link--active" : ""}`}>
+              Subscriptions
+            </NavLink>
+            <NavLink to="/alerts" className={({ isActive }) => `nav-link${isActive ? " nav-link--active" : ""}`}>
+              Alerts
+            </NavLink>
+            <NavLink to="/ask" className={({ isActive }) => `nav-link${isActive ? " nav-link--active" : ""}`}>
+              Ask
+            </NavLink>
+          </nav>
+          <button
+            type="button"
+            className="theme-toggle"
+            aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
+            onClick={() => setTheme((current) => current === "light" ? "dark" : "light")}
+          >
+            {theme === "light" ? "DARK" : "LIGHT"}
+          </button>
+        </div>
+      </header>
+      <main className="site-main">
+        <div key={location.pathname} className="route-content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/import" element={<ImportPage />} />
@@ -29,8 +72,16 @@ export default function App() {
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/ask" element={<Ask />} />
           </Routes>
-        </main>
-      </div>
+        </div>
+      </main>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Shell />
     </BrowserRouter>
   );
 }

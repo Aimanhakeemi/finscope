@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { listAlerts, type AlertsResponse } from "../api/client";
 
+function formatAmount(value: number): string {
+  const amount = Math.abs(value).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return value < 0 ? `− $${amount}` : `$${amount}`;
+}
+
 export default function Alerts() {
   const [data, setData] = useState<AlertsResponse | null>(null);
   const [error, setError] = useState("");
@@ -11,34 +19,44 @@ export default function Alerts() {
       .catch((cause) => setError(cause instanceof Error ? cause.message : "Could not load alerts."));
   }, []);
 
-  if (error) return <p role="alert" className="text-rose-400">{error}</p>;
-  if (!data) return <p className="text-slate-400">Loading alerts…</p>;
+  if (error) return <p role="alert" className="error-message">{error}</p>;
+  if (!data) return <p className="loading-message">Loading alerts…</p>;
 
   return (
-    <section className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold">Alerts</h1>
-        <p className="mt-2 text-slate-400">Unusual non-recurring charges from the latest period.</p>
-      </div>
+    <section className="page">
+      <header className="page-header">
+        <div>
+          <h1 className="page-title">Alerts</h1>
+          <p className="page-summary">Unusual non-recurring charges from the latest period.</p>
+        </div>
+      </header>
       {data.alerts.length === 0 ? (
-        <p className="rounded-xl border border-slate-800 bg-slate-900 p-6 text-slate-400">No alerts found.</p>
+        <p className="panel empty-state">No unusual charges in this period.</p>
       ) : (
-        <div className="space-y-4">
-          {data.alerts.map((alert) => (
-            <article key={alert.transaction_id} className="rounded-xl border border-rose-900/60 bg-slate-900 p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 className="font-medium">{alert.description_raw}</h2>
-                  <p className="mt-1 text-sm text-slate-400">{alert.txn_date} · {alert.category}</p>
-                </div>
-                <p className="text-lg font-semibold text-rose-300">${Math.abs(alert.amount).toFixed(2)}</p>
-              </div>
-              <p className="mt-4 text-sm text-slate-300">{alert.reason}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {alert.signals.map((signal) => <span key={signal} className="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-300">{signal}</span>)}
-              </div>
-            </article>
-          ))}
+        <div className="ledger-table-wrap">
+          <table className="ledger-table ledger-table--alerts">
+            <thead>
+              <tr><th>Merchant</th><th>Date</th><th className="numeric">Amount</th><th>Signals</th></tr>
+            </thead>
+            <tbody>
+              {data.alerts.map((alert) => (
+                <tr key={alert.transaction_id}>
+                  <td>
+                    {alert.description_raw}
+                    <span className="subline">{alert.reason}</span>
+                  </td>
+                  <td>
+                    {alert.txn_date}
+                    <span className="subline">{alert.category}</span>
+                  </td>
+                  <td className="numeric flag-amount">{formatAmount(alert.amount)}</td>
+                  <td>
+                    {alert.signals.map((signal) => <span key={signal} className="flag-tag">{signal}</span>)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </section>

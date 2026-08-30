@@ -1,9 +1,85 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getForecast, getSummary, listTransactions, updateTransactionCategory, type Category, type ForecastResponse, type Summary, type Transaction } from "../api/client";
 import CategoryBarChart from "../components/CategoryBarChart";
 import DataTable from "../components/DataTable";
 import ForecastCard from "../components/ForecastCard";
 import MonthlyTrendChart from "../components/MonthlyTrendChart";
+
+function formatAmount(value: number, positiveSign = false): string {
+  const amount = Math.abs(value).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  if (value < 0) return `− $${amount}`;
+  return `${positiveSign && value > 0 ? "+ " : ""}$${amount}`;
+}
+
+function formatDate(value: string | null): string {
+  if (!value) return "";
+  const parsed = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(parsed.valueOf())) return value;
+  return parsed.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function StatementHeader({ summary }: { summary: Summary }) {
+  const targetNet = summary.totals.net;
+  const [displayNet, setDisplayNet] = useState(targetNet);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    if (hasAnimated.current) {
+      setDisplayNet(targetNet);
+      return;
+    }
+    hasAnimated.current = true;
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion || typeof window.requestAnimationFrame !== "function") {
+      setDisplayNet(targetNet);
+      return;
+    }
+
+    const start = performance.now();
+    let frame = 0;
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - start) / 500);
+      const eased = 1 - (1 - progress) ** 3;
+      setDisplayNet(targetNet * eased);
+      if (progress < 1) frame = window.requestAnimationFrame(tick);
+    };
+    frame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frame);
+  }, [targetNet]);
+
+  const [from, to] = summary.range;
+  const period = from && to ? `${formatDate(from)} — ${formatDate(to)}` : "All imported transactions";
+
+  return (
+    <div className="panel statement">
+      <div className="statement__period">
+        <p className="section-eyebrow">Statement period</p>
+        <span className="statement__period-value">{period}</span>
+      </div>
+      <div className="statement__lines">
+        <div className="statement__line">
+          <span className="statement__label">Opening balance</span>
+          <span className="statement__amount">$0.00</span>
+        </div>
+        <div className="statement__line">
+          <span className="statement__label">Total in</span>
+          <span className="statement__amount statement__amount--positive">{formatAmount(summary.totals.income, true)}</span>
+        </div>
+        <div className="statement__line">
+          <span className="statement__label">Total out</span>
+          <span className="statement__amount statement__amount--negative">{formatAmount(summary.totals.spend)}</span>
+        </div>
+        <div className="statement__line statement__net-line">
+          <span className="statement__label">Net position</span>
+          <span className="statement__net" aria-live="polite">{formatAmount(displayNet)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -30,41 +106,46 @@ export default function Dashboard() {
     }
   }
 
-  if (error) return <p role="alert" className="text-rose-400">{error}</p>;
-  if (!summary) return <p className="text-slate-400">Loading dashboard…</p>;
+  if (error) return <p role="alert" className="error-message">{error}</p>;
+  if (!summary) return <p className="loading-message">Loading dashboard…</p>;
 
   return (
-    <section className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold">Dashboard</h1>
-        <p className="mt-2 text-slate-400">Your spending at a glance.</p>
-      </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        {Object.entries(summary.totals).map(([label, value]) => (
-          <div key={label} className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-            <p className="text-sm capitalize text-slate-400">{label}</p>
-            <p className="mt-2 text-2xl font-semibold">${value.toFixed(2)}</p>
-          </div>
-        ))}
-      </div>
-      <div className="grid gap-6 lg:grid-cols-2">
+    <section className="page page--dashboard">
+      <header className="page-header">
+        <div>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="page-summary">Your spending at a glance.</p>
+        </div>
+      </header>
+      <StatementHeader summary={summary} />
+      <div className="dashboard-grid">
         <CategoryBarChart data={summary.by_category} />
         <MonthlyTrendChart data={summary.monthly} />
       </div>
-      {forecast && <ForecastCard data={forecast} />}
-      <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-        <h2 className="mb-4 text-lg font-medium">Top merchants</h2>
-        <div className="space-y-3">
-          {summary.top_merchants.map((merchant) => {
-            const width = Math.max(5, Math.round((Math.abs(merchant.total) / Math.max(1, Math.abs(summary.top_merchants[0]?.total ?? 1))) * 100));
-            return <div key={merchant.merchant}><div className="mb-1 flex justify-between text-sm"><span>{merchant.merchant}</span><span>${Math.abs(merchant.total).toFixed(2)}</span></div><div className="h-2 rounded bg-slate-800"><div className="h-2 rounded bg-violet-400" style={{ width: `${width}%` }} /></div></div>;
-          })}
+      <section>
+        <h2 className="section-eyebrow spacer-heading">Top merchants</h2>
+        <div className="ledger-table-wrap">
+          <table className="ledger-table">
+            <thead>
+              <tr><th>Merchant</th><th className="numeric">Amount</th><th className="numeric">Transactions</th></tr>
+            </thead>
+            <tbody>
+              {summary.top_merchants.map((merchant) => (
+                <tr key={merchant.merchant}>
+                  <td>{merchant.merchant}</td>
+                  <td className="numeric">{formatAmount(merchant.total)}</td>
+                  <td className="numeric">{merchant.txn_count}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
-      <div>
-        <h2 className="mb-3 text-lg font-medium">Recent transactions</h2>
+      </section>
+      {forecast && <ForecastCard data={forecast} />}
+      <section>
+        <h2 className="section-eyebrow spacer-heading">Recent transactions</h2>
         <DataTable transactions={transactions} onCategoryChange={changeCategory} />
-      </div>
+      </section>
     </section>
   );
 }

@@ -14,12 +14,11 @@ interface Props {
   data: MonthlyTotal[];
 }
 
-function formatCurrency(value: number, fractionDigits = 2): string {
-  const amount = Math.abs(value).toLocaleString("en-US", {
+function formatCurrency(value: number, fractionDigits = 0): string {
+  return `$${Math.abs(value).toLocaleString("en-US", {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
-  });
-  return value < 0 ? `-$${amount}` : `$${amount}`;
+  })}`;
 }
 
 export default function MonthlyTrendChart({ data }: Props) {
@@ -30,27 +29,48 @@ export default function MonthlyTrendChart({ data }: Props) {
   }));
 
   return (
-    <div className="h-80 rounded-xl border border-slate-800 bg-slate-900 p-4">
-      <h2 className="mb-4 text-lg font-medium">Monthly trend</h2>
-      <ResponsiveContainer width="100%" height="90%">
-        <LineChart data={chartData} margin={{ left: 8, right: 12 }}>
-          <CartesianGrid stroke="#1e293b" />
-          <XAxis dataKey="month" stroke="#94a3b8" />
-          <YAxis
-            tickFormatter={(value) => formatCurrency(Number(value), 0)}
-            stroke="#94a3b8"
-          />
-          <Tooltip
-            formatter={(value, name) => [
-              formatCurrency(Number(value)),
-              name,
-            ]}
-          />
-          <Legend />
-          <Line type="monotone" dataKey="spend" name="Spend" stroke="#f472b6" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="income" name="Income" stroke="#4ade80" strokeWidth={2} dot={false} />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+    <section className="panel chart-panel">
+      <h2 className="section-eyebrow">Monthly trend</h2>
+      <div className="chart-panel__plot">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chartData} margin={{ left: 8, right: 12 }}>
+            <CartesianGrid stroke="var(--rule)" />
+            <XAxis
+              dataKey="month"
+              tick={{ fill: "var(--ink-soft)" }}
+              axisLine={{ stroke: "var(--rule)" }}
+              tickLine={{ stroke: "var(--rule)" }}
+            />
+            <YAxis
+              tickFormatter={(value) => formatCurrency(Number(value))}
+              tick={{ fill: "var(--ink-soft)" }}
+              axisLine={{ stroke: "var(--rule)" }}
+              tickLine={{ stroke: "var(--rule)" }}
+            />
+            <Tooltip
+              formatter={(value, name) => [formatCurrency(Number(value), 2), name]}
+              contentStyle={{
+                backgroundColor: "var(--paper)",
+                border: "1px solid var(--rule)",
+                borderRadius: "4px",
+                color: "var(--ink)",
+                fontFamily: "IBM Plex Mono, monospace",
+                fontSize: "12px",
+              }}
+              labelStyle={{ color: "var(--ink-soft)" }}
+              itemStyle={{ color: "var(--ink)" }}
+            />
+            <Legend
+              align="right"
+              verticalAlign="top"
+              height={24}
+              wrapperStyle={{ color: "var(--ink-soft)" }}
+            />
+            <Line type="monotone" dataKey="spend" name="Spend" stroke="var(--flag)" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="income" name="Income" stroke="var(--ledger)" strokeWidth={2} dot={false} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </section>
   );
 }

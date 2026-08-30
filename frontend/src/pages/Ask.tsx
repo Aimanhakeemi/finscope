@@ -1,6 +1,8 @@
 import { FormEvent, useState } from "react";
 import { askQuestion, type AskResponse } from "../api/client";
 
+const DISABLED_NOTE = "Natural-language questions need an API key. Add `ANTHROPIC_API_KEY` to your `.env` to enable this.";
+
 function displayValue(value: unknown): string {
   if (value === null || value === undefined) return "—";
   return String(value);
@@ -29,46 +31,56 @@ export default function Ask() {
     }
   }
 
+  const disabled = error.includes("ANTHROPIC_API_KEY");
+  const singleValue = answer && answer.rows.length === 1 && answer.columns.length === 1;
+
   return (
-    <section className="mx-auto max-w-5xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold">Ask FinScope</h1>
-        <p className="mt-2 text-slate-400">Ask a question about your imported spending.</p>
-      </div>
-      <form onSubmit={submit} className="flex gap-3 rounded-xl border border-slate-800 bg-slate-900 p-5">
-        <input
-          aria-label="Spending question"
-          value={question}
-          onChange={(event) => setQuestion(event.target.value)}
-          placeholder="How much did I spend on coffee since June?"
-          className="field flex-1"
-        />
-        <button disabled={busy} className="rounded bg-sky-500 px-4 py-2 font-medium text-slate-950 disabled:opacity-50">
-          {busy ? "Asking…" : "Ask"}
-        </button>
+    <section className="page page--narrow">
+      <header className="page-header">
+        <div>
+          <h1 className="page-title">Ask FinScope</h1>
+          <p className="page-summary">Ask a question about your imported spending.</p>
+        </div>
+      </header>
+      <form onSubmit={submit} className="panel ask-form">
+        <div className="ask-form__row">
+          <input
+            aria-label="Spending question"
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            placeholder="e.g. how much did I spend on coffee since June?"
+            className="field"
+          />
+          <button type="submit" disabled={busy} className="button button--primary">
+            {busy ? "Asking…" : "Ask"}
+          </button>
+        </div>
       </form>
-      {error && <p role="alert" className="text-rose-400">{error}</p>}
+      {disabled && <p className="panel disabled-note">{DISABLED_NOTE}</p>}
+      {error && !disabled && <p role="alert" className="error-message">{error}</p>}
       {answer && (
-        <div className="space-y-4">
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-            <h2 className="mb-3 text-lg font-medium">Answer</h2>
+        <div className="ask-result">
+          <section className={`statement-answer${singleValue ? " statement-answer--aggregate" : ""}`}>
+            <p className="section-eyebrow">Answer</p>
             {answer.rows.length === 0 ? (
-              <p className="text-slate-400">No matching rows.</p>
+              <p className="empty-state">No matching rows.</p>
+            ) : singleValue ? (
+              <p className="statement-answer__value">{displayValue(answer.rows[0][answer.columns[0]])}</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead><tr>{answer.columns.map((column) => <th key={column} className="border-b border-slate-800 px-3 py-2 text-slate-400">{column}</th>)}</tr></thead>
-                  <tbody>{answer.rows.map((row, index) => <tr key={index}>{answer.columns.map((column) => <td key={column} className="border-b border-slate-800 px-3 py-2">{displayValue(row[column])}</td>)}</tr>)}</tbody>
+              <div className="ledger-table-wrap">
+                <table className="ledger-table">
+                  <thead><tr>{answer.columns.map((column) => <th key={column}>{column}</th>)}</tr></thead>
+                  <tbody>{answer.rows.map((row, index) => <tr key={index}>{answer.columns.map((column) => <td key={column} className={typeof row[column] === "number" ? "numeric" : ""}>{displayValue(row[column])}</td>)}</tr>)}</tbody>
                 </table>
               </div>
             )}
-            {answer.truncated && <p className="mt-3 text-xs text-amber-300">Results capped at 500 rows.</p>}
-          </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-            <h2 className="mb-3 text-lg font-medium">Generated SQL</h2>
-            <pre aria-label="Generated SQL" className="overflow-x-auto rounded bg-slate-950 p-4 text-sm text-slate-300"><code>{answer.sql}</code></pre>
-            <p className="mt-3 text-xs text-slate-500">Read-only query against the protected transaction view.</p>
-          </div>
+            {answer.truncated && <p className="caption">Results capped at 500 rows.</p>}
+          </section>
+          <section className="query-panel">
+            <p className="section-eyebrow">Query</p>
+            <pre aria-label="Generated SQL"><code>{answer.sql}</code></pre>
+            <p className="caption query-panel__caption">Read-only query against the protected transaction view.</p>
+          </section>
         </div>
       )}
     </section>
