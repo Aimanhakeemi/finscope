@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.categorize import TAXONOMY, Categorizer
 from app.etl import ETLError, normalize
 from app.models import Import, Transaction
+from app.services.enrich_service import enrich_user
 
 
 def make_dedupe_key(txn_date: date, merchant: str, amount: Decimal) -> str:
@@ -80,6 +81,7 @@ def import_statement(
 
     imported.row_count = len(accepted_dates)
     session.commit()
+    enrich_user(session, user_id)
     dates = accepted_dates or frame["txn_date"].tolist()
     return {
         "import_id": str(imported.id),

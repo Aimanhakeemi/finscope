@@ -89,6 +89,41 @@ export interface Summary {
   top_merchants: MerchantTotal[];
 }
 
+export interface Subscription {
+  recurring_group_id: string;
+  merchant: string;
+  cadence: "weekly" | "biweekly" | "monthly" | "quarterly" | "annual";
+  avg_amount: number;
+  amount_stddev: number;
+  monthly_cost: number;
+  first_seen: string;
+  last_seen: string;
+  next_expected: string;
+  occurrences: number;
+  active: boolean;
+  price_changed: boolean;
+}
+
+export interface SubscriptionsResponse {
+  subscriptions: Subscription[];
+  total_monthly_cost: number;
+  total_annual_cost: number;
+}
+
+export interface Alert {
+  transaction_id: string;
+  txn_date: string;
+  description_raw: string;
+  amount: number;
+  category: Category;
+  reason: string;
+  signals: string[];
+}
+
+export interface AlertsResponse {
+  alerts: Alert[];
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -159,4 +194,13 @@ export async function getSummary(from?: string, to?: string): Promise<Summary> {
   if (to) query.set("to", to);
   const suffix = query.toString() ? `?${query.toString()}` : "";
   return request<Summary>(`/api/analytics/summary${suffix}`);
+}
+
+export async function listSubscriptions(): Promise<SubscriptionsResponse> {
+  return request<SubscriptionsResponse>("/api/subscriptions");
+}
+
+export async function listAlerts(from?: string): Promise<AlertsResponse> {
+  const suffix = from ? `?from=${encodeURIComponent(from)}` : "";
+  return request<AlertsResponse>(`/api/alerts${suffix}`);
 }

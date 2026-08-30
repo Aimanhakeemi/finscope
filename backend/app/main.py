@@ -12,8 +12,10 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import settings
 from app.db import SessionLocal
+from app.routes.alerts import router as alerts_router
 from app.routes.analytics import router as analytics_router
 from app.routes.imports import router as imports_router
+from app.routes.subscriptions import router as subscriptions_router
 from app.routes.transactions import router as transactions_router
 from app.seed import seed_demo_user
 
@@ -40,6 +42,8 @@ app.add_middleware(
 app.include_router(imports_router)
 app.include_router(transactions_router)
 app.include_router(analytics_router)
+app.include_router(subscriptions_router)
+app.include_router(alerts_router)
 
 
 @app.get("/healthz")

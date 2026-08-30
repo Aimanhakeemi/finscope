@@ -1,0 +1,4 @@
+dedupe_key,merchant,txn_date,amount,expected_anomaly
+0ccd575edad49ea3dd2603aaf2a1f64a4292fc1c,big appliance warehouse,2026-02-02,-1240.00,1
+d8807bdb556ce81b0051bb8a28430cccce71cbc3,overseas atm withdrawal,2026-07-27,-600.00,1
+c2a337c3c8d89f55ed452de98a4cd318f15f1925,amzn mktp us 2x4b1,2026-02-04,-35.00,0

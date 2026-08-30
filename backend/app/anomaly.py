@@ -17,6 +17,7 @@ NEW_MERCHANT_PERCENTILE = 0.90
 class Flag:
     index: int
     reason: str
+    signals: tuple[str, ...] = ()
 
 
 def _robust_z(x: float, values: list[float]) -> float:
@@ -54,12 +55,15 @@ def detect_anomalies(
     for i in outflow_idx:
         amt = abs(amounts[i])
         cat_values = by_cat[categories[i]]
+        # ponytail: sparse categories borrow the global baseline; use hierarchical
+        # statistics if anomaly volume or category count later makes this too coarse.
+        reference_values = cat_values if len(cat_values) >= 4 else all_outflows
         signals: list[str] = []
 
-        if len(cat_values) >= 4:
-            if abs(_robust_z(amt, cat_values)) > ROBUST_Z_CUTOFF:
+        if len(reference_values) >= 4:
+            if abs(_robust_z(amt, reference_values)) > ROBUST_Z_CUTOFF:
                 signals.append(f"{amt:.0f} is a statistical outlier for {categories[i]}")
-            lo, hi = _iqr_bounds(cat_values)
+            _lo, hi = _iqr_bounds(reference_values)
             if amt > hi:
                 signals.append(f"{amt:.0f} exceeds the IQR fence for {categories[i]}")
 
@@ -69,6 +73,15 @@ def detect_anomalies(
         seen_merchants.add(merchants[i])
 
         if len(signals) >= 2:
-            flags.append(Flag(i, "; ".join(signals)))
+            signal_names = tuple(
+                name
+                for name, condition in (
+                    ("robust_z", "statistical outlier" in " ".join(signals)),
+                    ("iqr", "IQR fence" in " ".join(signals)),
+                    ("new_large_merchant", "first charge" in " ".join(signals)),
+                )
+                if condition
+            )
+            flags.append(Flag(i, "; ".join(signals), signal_names))
 
     return flags

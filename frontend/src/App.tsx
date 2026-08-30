@@ -1,6 +1,8 @@
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import ImportPage from "./pages/Import";
+import Alerts from "./pages/Alerts";
+import Subscriptions from "./pages/Subscriptions";
 
 export default function App() {
   return (
@@ -12,6 +14,8 @@ export default function App() {
             <div className="flex gap-5 text-sm text-slate-300">
               <Link to="/" className="hover:text-white">Dashboard</Link>
               <Link to="/import" className="hover:text-white">Import</Link>
+              <Link to="/subscriptions" className="hover:text-white">Subscriptions</Link>
+              <Link to="/alerts" className="hover:text-white">Alerts</Link>
             </div>
           </div>
         </nav>
@@ -19,6 +23,8 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/import" element={<ImportPage />} />
+            <Route path="/subscriptions" element={<Subscriptions />} />
+            <Route path="/alerts" element={<Alerts />} />
           </Routes>
         </main>
       </div>
