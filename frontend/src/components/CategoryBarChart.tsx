@@ -8,6 +8,7 @@ import {
   YAxis,
 } from "recharts";
 import type { CategoryTotal } from "../api/client";
+import { humanizeCategory } from "../format";
 
 interface Props {
   data: CategoryTotal[];
@@ -31,7 +32,7 @@ export default function CategoryBarChart({ data }: Props) {
   const chartData = data
     .filter((item) => item.category !== "income")
     .map((item) => ({
-      category: item.category.replace(/_/g, " "),
+      category: humanizeCategory(item.category),
       spent: Math.abs(item.total),
     }))
     .sort((a, b) => b.spent - a.spent);

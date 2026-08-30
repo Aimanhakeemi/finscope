@@ -47,6 +47,8 @@ describe("Transactions", () => {
     expect(screen.getByLabelText("Anomaly")).toBeInTheDocument();
     expect(screen.getByLabelText("From date")).toBeInTheDocument();
     expect(screen.getByLabelText("To date")).toBeInTheDocument();
+    expect(screen.getAllByRole("option", { name: "Rent / mortgage" })[0]).toHaveValue("rent_mortgage");
+    expect(screen.getByText("Aug 1, 2026")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("http://localhost:8000/api/transactions?limit=50&offset=0&sort=-date");
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }));

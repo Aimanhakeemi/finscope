@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import DataTable from "../components/DataTable";
 import { listTransactions, TAXONOMY, updateTransactionCategory, type Category, type TransactionsResponse } from "../api/client";
+import { humanizeCategory } from "../format";
 
 const PAGE_SIZE = 50;
 
@@ -83,7 +84,7 @@ export default function Transactions() {
             <span className="field-label">Category</span>
             <select aria-label="Category" className="field" value={filters.category} onChange={(event) => updateFilter("category", event.target.value as Filters["category"])}>
               <option value="">All categories</option>
-              {TAXONOMY.map((category) => <option key={category} value={category}>{category}</option>)}
+              {TAXONOMY.map((category) => <option key={category} value={category}>{humanizeCategory(category)}</option>)}
             </select>
           </label>
           <label>

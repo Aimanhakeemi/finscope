@@ -5,6 +5,7 @@ import CategoryBarChart from "../components/CategoryBarChart";
 import DataTable from "../components/DataTable";
 import ForecastCard from "../components/ForecastCard";
 import MonthlyTrendChart from "../components/MonthlyTrendChart";
+import { formatDate } from "../format";
 
 function formatAmount(value: number, positiveSign = false): string {
   const amount = Math.abs(value).toLocaleString("en-US", {
@@ -13,13 +14,6 @@ function formatAmount(value: number, positiveSign = false): string {
   });
   if (value < 0) return `− $${amount}`;
   return `${positiveSign && value > 0 ? "+ " : ""}$${amount}`;
-}
-
-function formatDate(value: string | null): string {
-  if (!value) return "";
-  const parsed = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(parsed.valueOf())) return value;
-  return parsed.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 function StatementHeader({ summary }: { summary: Summary }) {
@@ -110,6 +104,8 @@ export default function Dashboard() {
   if (error) return <p role="alert" className="error-message">{error}</p>;
   if (!summary) return <p className="loading-message">Loading dashboard…</p>;
 
+  const spendMerchants = summary.top_merchants.filter((merchant) => merchant.total < 0);
+
   return (
     <section className="page page--dashboard">
       <header className="page-header">
@@ -131,7 +127,7 @@ export default function Dashboard() {
               <tr><th>Merchant</th><th className="numeric">Amount</th><th className="numeric">Transactions</th></tr>
             </thead>
             <tbody>
-              {summary.top_merchants.map((merchant) => (
+              {spendMerchants.map((merchant) => (
                 <tr key={merchant.merchant}>
                   <td>{merchant.merchant}</td>
                   <td className="numeric">{formatAmount(merchant.total)}</td>

@@ -39,5 +39,6 @@ describe("Subscriptions", () => {
     expect(await screen.findByText("netflix.com")).toBeInTheDocument();
     expect(screen.getByText("$20.00")).toBeInTheDocument();
     expect(screen.getByText("Price changed by more than 5%.")).toBeInTheDocument();
+    expect(screen.getByText("Jul 31, 2026")).toBeInTheDocument();
   });
 });

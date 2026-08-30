@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { uploadImport, type ImportSummary } from "../api/client";
+import { humanizeCategory } from "../format";
 
 export default function ImportPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -101,7 +102,7 @@ export default function ImportPage() {
           <div className="breakdown-grid">
             {Object.entries(result.category_breakdown).map(([category, count]) => (
               <div key={category} className="breakdown-item">
-                <span>{category}</span><span className="data-number">{count}</span>
+                <span>{humanizeCategory(category)}</span><span className="data-number">{count}</span>
               </div>
             ))}
           </div>

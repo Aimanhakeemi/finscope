@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { listAlerts, type AlertsResponse } from "../api/client";
+import { formatDate, humanizeCategory, humanizeSignal } from "../format";
 
 function formatAmount(value: number): string {
   const amount = Math.abs(value).toLocaleString("en-US", {
@@ -45,13 +46,13 @@ export default function Alerts() {
                     {alert.description_raw}
                     <span className="subline">{alert.reason}</span>
                   </td>
-                  <td>
-                    {alert.txn_date}
-                    <span className="subline">{alert.category}</span>
+                  <td className="date-cell">
+                    {formatDate(alert.txn_date)}
+                    <span className="subline">{humanizeCategory(alert.category)}</span>
                   </td>
                   <td className="numeric flag-amount">{formatAmount(alert.amount)}</td>
                   <td>
-                    {alert.signals.map((signal) => <span key={signal} className="flag-tag">{signal}</span>)}
+                    {alert.signals.map((signal) => <span key={signal} className="flag-tag">{humanizeSignal(signal)}</span>)}
                   </td>
                 </tr>
               ))}

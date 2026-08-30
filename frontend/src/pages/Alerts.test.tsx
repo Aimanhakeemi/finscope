@@ -23,7 +23,7 @@ describe("Alerts", () => {
           amount: -1240,
           category: "shopping",
           reason: "large statistical outlier",
-          signals: ["robust_z", "iqr"],
+          signals: ["robust_z", "iqr", "new_large_merchant"],
         },
       ],
     });
@@ -31,6 +31,9 @@ describe("Alerts", () => {
 
     expect(await screen.findByText("BIG APPLIANCE WAREHOUSE")).toBeInTheDocument();
     expect(screen.getByText("large statistical outlier")).toBeInTheDocument();
-    expect(screen.getByText("robust_z")).toBeInTheDocument();
+    expect(screen.getByText("Statistical outlier")).toBeInTheDocument();
+    expect(screen.getByText("Outside normal range")).toBeInTheDocument();
+    expect(screen.getByText("New large merchant")).toBeInTheDocument();
+    expect(screen.getByText("Feb 2, 2026")).toBeInTheDocument();
   });
 });

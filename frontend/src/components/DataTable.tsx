@@ -1,4 +1,5 @@
 import { TAXONOMY, type Category, type Transaction } from "../api/client";
+import { formatDate, humanizeCategory } from "../format";
 
 interface Props {
   transactions: Transaction[];
@@ -28,7 +29,7 @@ export default function DataTable({ transactions, onCategoryChange }: Props) {
         <tbody>
           {transactions.map((transaction) => (
             <tr key={transaction.id}>
-              <td>{transaction.txn_date}</td>
+              <td className="date-cell">{formatDate(transaction.txn_date)}</td>
               <td>{transaction.merchant}</td>
               <td className={`numeric${transaction.amount < 0 ? " flag-amount" : ""}`}>{formatAmount(transaction.amount)}</td>
               <td>
@@ -42,7 +43,7 @@ export default function DataTable({ transactions, onCategoryChange }: Props) {
                 >
                   {TAXONOMY.map((category) => (
                     <option key={category} value={category}>
-                      {category}
+                      {humanizeCategory(category)}
                     </option>
                   ))}
                 </select>

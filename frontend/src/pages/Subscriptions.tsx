@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { listSubscriptions, type SubscriptionsResponse } from "../api/client";
+import { formatDate } from "../format";
 
 function formatCurrency(value: number): string {
   return `$${Math.abs(value).toLocaleString("en-US", {
@@ -68,7 +69,7 @@ export default function Subscriptions() {
                   </td>
                   <td>{subscription.cadence}</td>
                   <td className="numeric">{formatCurrency(subscription.monthly_cost)}</td>
-                  <td>{subscription.next_expected}</td>
+                  <td className="date-cell">{formatDate(subscription.next_expected)}</td>
                   <td>
                     <span className={`status-dot${subscription.active ? "" : " status-dot--inactive"}`} aria-hidden="true" />
                     <span className="visually-hidden">{subscription.active ? "Active" : "Inactive"}</span>

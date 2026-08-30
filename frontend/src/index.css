@@ -424,6 +424,10 @@ a {
   font-size: 12px;
 }
 
+.date-cell {
+  white-space: nowrap;
+}
+
 .ledger-table__total td {
   border-top: 3px double var(--rule);
   color: var(--ink);

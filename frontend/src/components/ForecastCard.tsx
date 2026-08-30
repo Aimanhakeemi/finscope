@@ -1,4 +1,5 @@
 import type { ForecastResponse } from "../api/client";
+import { humanizeCategory } from "../format";
 
 interface Props {
   data: ForecastResponse;
@@ -28,7 +29,7 @@ export default function ForecastCard({ data }: Props) {
         <div className="forecast-grid">
           {data.by_category.slice(0, 6).map((item) => (
             <div key={item.category} className="forecast-item">
-              <p className="forecast-item__category">{item.category.replace(/_/g, " ")}</p>
+              <p className="forecast-item__category">{humanizeCategory(item.category)}</p>
               <p className="forecast-item__value">{formatSpend(item.point)}</p>
             </div>
           ))}
