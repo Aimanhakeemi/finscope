@@ -23,11 +23,17 @@ function formatCurrency(value: number, fractionDigits = 2): string {
 }
 
 export default function MonthlyTrendChart({ data }: Props) {
+  const chartData = data.map((item) => ({
+    month: item.month,
+    spend: Math.abs(item.spend),
+    income: item.income,
+  }));
+
   return (
     <div className="h-80 rounded-xl border border-slate-800 bg-slate-900 p-4">
       <h2 className="mb-4 text-lg font-medium">Monthly trend</h2>
       <ResponsiveContainer width="100%" height="90%">
-        <LineChart data={data} margin={{ left: 8, right: 12 }}>
+        <LineChart data={chartData} margin={{ left: 8, right: 12 }}>
           <CartesianGrid stroke="#1e293b" />
           <XAxis dataKey="month" stroke="#94a3b8" />
           <YAxis
