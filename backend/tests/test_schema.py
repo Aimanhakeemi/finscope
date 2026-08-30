@@ -9,7 +9,9 @@ def test_postgres_schema_dump_matches_contract(postgres_connection):
             text(
                 """
                 SELECT table_name FROM information_schema.tables
-                WHERE table_schema = 'public' AND table_name <> 'alembic_version'
+                WHERE table_schema = 'public'
+                  AND table_type = 'BASE TABLE'
+                  AND table_name <> 'alembic_version'
                 """
             )
         ).scalars()
