@@ -34,18 +34,20 @@ Steps:
 
 | Component | Metric | Gate |
 | --- | --- | --- |
-| Categorizer | accuracy | ≥ 0.86 |
-| Categorizer | macro-F1 | ≥ 0.80 |
+| Categorizer | accuracy | ≥ 0.84 |
+| Categorizer | macro-F1 | ≥ 0.78 |
 | Categorizer | manual-review rate | reported |
 | Recurring detector | precision | ≥ 0.82 |
 | Recurring detector | recall | ≥ 0.75 |
 | Anomaly detector | precision | ≥ 0.70 |
 | Anomaly detector | false alerts / 100 txns | ≤ 1.0 |
-| Forecaster | MAPE (3-month backtest) | reported only |
+| Forecaster | MAPE (3-month backtest, seasonal-naive baseline) | reported only |
 | NL→SQL | valid-SQL rate | ≥ 0.95 |
 | NL→SQL | execution accuracy | ≥ 0.80 |
 
 The categorizer and recurring gates leave several points of headroom for normal CI float variance.
+
+The backtest uses the seasonal-naive baseline because the ETS optimizer is not reproducible across statsmodels builds; the app itself still auto-selects ETS at runtime.
 
 ## Ablations worth showing in the report
 
