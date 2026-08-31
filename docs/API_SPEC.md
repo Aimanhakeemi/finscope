@@ -55,7 +55,7 @@ instead of `amount`.
   "rows_received": 540,
   "rows_accepted": 518,
   "rows_deduped": 22,
-  "date_range": ["2025-09-01", "2026-08-01"],
+  "date_range": ["2025-08-01", "2026-07-31"],
   "category_breakdown": { "groceries": 61, "coffee": 88, "…": 0 },
   "llm_fallback_count": 0
 }
@@ -76,7 +76,7 @@ List past imports, newest first.
 ```json
 { "imports": [
   { "import_id": "b1f2…", "filename": "statement.csv", "rows_accepted": 518,
-    "imported_at": "2026-08-29T10:04:00Z", "date_range": ["2025-09-01","2026-08-01"] }
+    "imported_at": "2026-08-29T10:04:00Z", "date_range": ["2025-08-01","2026-07-31"] }
 ] }
 ```
 
@@ -97,7 +97,7 @@ Query params (all optional): `from` (date), `to` (date), `category`, `merchant`,
   "transactions": [
     {
       "id": "t_001",
-      "txn_date": "2026-08-01",
+      "txn_date": "2026-07-01",
       "description_raw": "GREENFIELD APARTMENTS",
       "merchant": "greenfield apartments",
       "amount": -1850.00,
@@ -139,7 +139,7 @@ Query params: `from` (date, default = earliest txn), `to` (date, default = lates
 **200**
 ```json
 {
-  "range": ["2025-09-01", "2026-08-01"],
+  "range": ["2025-08-01", "2026-07-31"],
   "totals": { "spend": -18234.55, "income": 41600.00, "net": 23365.45 },
   "by_category": [
     { "category": "rent_mortgage", "total": -22200.00, "txn_count": 12 },

@@ -1,4 +1,4 @@
 dedupe_key,merchant,txn_date,amount,expected_anomaly
-0ccd575edad49ea3dd2603aaf2a1f64a4292fc1c,big appliance warehouse,2026-02-02,-1240.00,1
-d8807bdb556ce81b0051bb8a28430cccce71cbc3,overseas atm withdrawal,2026-07-27,-600.00,1
-c2a337c3c8d89f55ed452de98a4cd318f15f1925,amzn mktp us 2x4b1,2026-02-04,-35.00,0
+a83e23ab5a28177fdc7bf41d7acce6ee9fa5c51e,big appliance warehouse,2026-01-30,-1240.00,1
+521551d02f84d8ca25122b5bb9866ce55840a2fd,overseas atm withdrawal,2026-07-26,-600.00,1
+9568b725a63df79d52619e7b81f85ad6964f5bc1,amzn mktp us 2x4b1,2026-02-01,-35.00,0

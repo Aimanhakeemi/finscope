@@ -363,7 +363,7 @@ LONG_TAIL_MERCHANTS: dict[str, tuple[MerchantProfile, ...]] = {
             ("PUGET ELECTRIC", "PUGET ELEC CO", "PUGET POWER #5", "PUGET ELECTRIC BILL"),
             "utilities",
             -92,
-            16,
+            8,
         ),
         merchant(
             ("NORTHWEST MOBILE", "NW MOBILE BILL", "NORTHWEST CELL #3", "NWM UTILITY BILL"),
@@ -614,11 +614,11 @@ RENT = merchant(
 
 def daterange_months(start: date, months: int):
     d = start
-    for _ in range(months * 31):
-        yield d
-        d += timedelta(days=1)
-        if (d - start).days > months * 30:
-            return
+    for _ in range(months):
+        next_month = (d.replace(day=28) + timedelta(days=4)).replace(day=1)
+        while d < next_month:
+            yield d
+            d += timedelta(days=1)
 
 
 def _variant(profile: MerchantProfile, rng: random.Random, split: str) -> str:
@@ -645,10 +645,16 @@ def main() -> None:
     ap.add_argument("--split", choices=("all", "train", "eval"), default="all")
     ap.add_argument("--out", type=Path, default=Path("data/sample_statement.csv"))
     args = ap.parse_args()
+    if args.months < 1:
+        ap.error("--months must be positive")
 
     rng = random.Random(args.seed)
-    end = date(2026, 8, 1)
-    start = end - timedelta(days=args.months * 30)
+    end = date(2026, 7, 31)
+    month_index = end.year * 12 + end.month - 1 - (args.months - 1)
+    start_year, start_month = divmod(month_index, 12)
+    start = date(start_year, start_month + 1, 1)
+    span_days = (end - start).days
+    midpoint = start + timedelta(days=span_days // 2)
 
     rows: list[dict[str, str]] = []
 
@@ -682,7 +688,7 @@ def main() -> None:
         d = start + timedelta(days=rng.randint(0, cadence))
         price = profile.typical_amount
         while d <= end:
-            if profile.variants[0] == "NETFLIX.COM" and (d - start).days > args.months * 15:
+            if profile.variants[0] == "NETFLIX.COM" and d > midpoint:
                 price = -17.99
             add(d, profile, _recurring_amount(price, rng), True)
             d += timedelta(days=cadence + rng.randint(-1, 1))
@@ -708,18 +714,18 @@ def main() -> None:
         for profiles in LONG_TAIL_MERCHANTS.values():
             for profile in profiles:
                 for _ in range(rng.randint(2, 4)):
-                    d = start + timedelta(days=rng.randint(0, args.months * 30))
+                    d = start + timedelta(days=rng.randint(0, span_days))
                     add(d, profile, _amount(profile, rng), False)
 
         # About 1.5% of the eval rows use a deliberately ambiguous merchant.
         ambiguous_count = max(1, round(len(rows) * 0.015))
         for _ in range(ambiguous_count):
             profile = rng.choice(AMBIGUOUS_MERCHANTS)
-            d = start + timedelta(days=rng.randint(0, args.months * 30))
+            d = start + timedelta(days=rng.randint(0, span_days))
             add(d, profile, _amount(profile, rng), False)
 
     # Stable anomaly identities: the fixture intentionally references these.
-    mid = start + timedelta(days=args.months * 15)
+    mid = midpoint
     rows.extend(
         [
             {
