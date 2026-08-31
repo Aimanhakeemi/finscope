@@ -42,13 +42,18 @@ def enrich_user(session: Session, user_id: UUID, today: date | None = None) -> N
             select(RecurringGroupModel).where(RecurringGroupModel.user_id == user_id)
         ).all()
     }
+    detected_keys = {(group.merchant, group.cadence) for group in detected}
     for transaction in transactions:
         transaction.is_recurring = False
         transaction.recurring_group_id = None
         transaction.is_anomaly = False
         transaction.anomaly_reason = None
-    for existing_group in existing.values():
-        existing_group.active = False
+    session.flush()
+    for key, existing_group in existing.items():
+        if key not in detected_keys:
+            session.delete(existing_group)
+        else:
+            existing_group.active = False
 
     for detected_group in detected:
         key = (detected_group.merchant, detected_group.cadence)

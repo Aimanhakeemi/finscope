@@ -3,7 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from app.models import Transaction
+from app.seed import seed_demo_user
+from app.services.enrich_service import enrich_user
 from fastapi.testclient import TestClient
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 
 def _sample_csv() -> bytes:
@@ -32,6 +37,32 @@ def test_subscriptions_include_cadence_cost_and_price_change(client: TestClient)
     assert "acme corp payroll" not in subscriptions
     assert body["total_monthly_cost"] > 0
     assert body["total_annual_cost"] == round(body["total_monthly_cost"] * 12, 2)
+
+
+def test_reenrichment_removes_no_longer_recurring_group(
+    client: TestClient, db_session: Session
+):
+    imported = client.post(
+        "/api/imports",
+        files={"file": ("sample_statement.csv", _sample_csv(), "text/csv")},
+    )
+    assert imported.status_code == 201
+    assert "netflix.com" in {
+        item["merchant"] for item in client.get("/api/subscriptions").json()["subscriptions"]
+    }
+
+    netflix_transactions = db_session.scalars(
+        select(Transaction)
+        .where(Transaction.merchant == "netflix.com")
+        .order_by(Transaction.txn_date, Transaction.id)
+    ).all()
+    for transaction in netflix_transactions[:-2]:
+        db_session.delete(transaction)
+    db_session.commit()
+    enrich_user(db_session, seed_demo_user(db_session).id)
+
+    subscriptions = client.get("/api/subscriptions").json()["subscriptions"]
+    assert "netflix.com" not in {item["merchant"] for item in subscriptions}
 
 
 def test_subscriptions_empty_state_is_valid(client: TestClient):

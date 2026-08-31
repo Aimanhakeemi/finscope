@@ -82,7 +82,9 @@ def list_subscriptions(
                 "price_changed": _price_changed(transactions),
             }
         )
-    subscriptions.sort(key=lambda item: (-item["monthly_cost"], item["merchant"]))
+    subscriptions.sort(
+        key=lambda item: (not item["active"], -item["monthly_cost"], item["merchant"])
+    )
     monthly = sum(item["monthly_cost"] for item in subscriptions)
     return {
         "subscriptions": subscriptions,
