@@ -49,9 +49,9 @@ jobs:
         run: pytest backend -q
         env:
           PYTHONPATH: backend
-      # - name: Evaluation gates   # enable after milestone M4
-      #   run: python -m app.eval --report docs/eval_report.md
-      #   working-directory: backend
+      - name: Evaluation gates
+        run: python -m app.eval --report ../docs/eval_report.md
+        working-directory: backend
 
   frontend:
     runs-on: ubuntu-latest
