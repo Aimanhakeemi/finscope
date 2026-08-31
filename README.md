@@ -36,13 +36,11 @@ Bank statements are noisy: recurring charges hide in transaction lists, categori
 
 *Alerts surface unusual charges with the reason and transaction context.*
 
-![Ask view](docs/img/ask.png)
+Ask turns a plain-English question into a read-only SQL query (shown to the user) and runs it against a restricted view — see docs/ARCHITECTURE.md for the guardrails.
 
-*Ask turns a plain-English question into a reviewable SQL query and result.*
+![The dashboard in the dark theme.](docs/img/dashboard-dark.png)
 
-![Dashboard in light and dark themes](docs/img/dashboard-dark.png)
-
-*Light and dark themes*
+*The dashboard in the dark theme.*
 
 ## Architecture
 

@@ -11,9 +11,9 @@ Synthetic data: 12 months; categorizer train split (seed 42) and eval split (see
 | Categorizer | accuracy | 0.8825 | ≥ 0.84 | PASS |
 | Categorizer | macro-F1 | 0.8370 | ≥ 0.78 | PASS |
 | Categorizer | manual-review rate | 0.3675 | reported | REPORTED |
-| Recurring detector | precision | 0.9270 | ≥ 0.82 | PASS |
+| Recurring detector | precision | 0.9429 | ≥ 0.82 | PASS |
 | Recurring detector | recall | 1.0000 | ≥ 0.75 | PASS |
-| Recurring detector | F1 | 0.9621 | reported | REPORTED |
+| Recurring detector | F1 | 0.9706 | reported | REPORTED |
 | Anomaly detector | precision | 1.0000 | ≥ 0.7 | PASS |
 | Anomaly detector | recall | 1.0000 | reported | REPORTED |
 | Anomaly detector | false alerts / 100 txns | 0.0000 | ≤ 1 | PASS |
@@ -90,8 +90,8 @@ Synthetic data: 12 months; categorizer train split (seed 42) and eval split (see
 
 | Configuration | Precision |
 | --- | ---: |
-| with amount-stability filter | 0.9270 |
-| without amount-stability filter | 0.9270 |
+| with amount-stability filter | 0.9429 |
+| without amount-stability filter | 0.9429 |
 
 ## Evaluation notes
 

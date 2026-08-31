@@ -30,8 +30,6 @@ RECURRING_ELIGIBLE_CATEGORIES = frozenset(
         "rent_mortgage",
         "health",
         "income",
-        "entertainment",
-        "other",
     }
 )
 

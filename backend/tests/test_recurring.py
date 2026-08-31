@@ -4,7 +4,12 @@ from pathlib import Path
 
 import pytest
 from app.etl import clean_merchant
-from app.recurring import Transaction, detect_recurring, is_active
+from app.recurring import (
+    RECURRING_ELIGIBLE_CATEGORIES,
+    Transaction,
+    detect_recurring,
+    is_active,
+)
 
 
 def _series(
@@ -24,6 +29,12 @@ def _series(
         )
         for i in range(n)
     ]
+
+
+def test_recurring_eligible_categories():
+    assert RECURRING_ELIGIBLE_CATEGORIES == frozenset(
+        {"subscriptions", "utilities", "rent_mortgage", "health", "income"}
+    )
 
 
 def test_detects_monthly_subscription():
