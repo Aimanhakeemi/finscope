@@ -31,3 +31,5 @@ backend/app/artifacts/*.json
 .DS_Store
 .idea/
 .vscode/
+CLAUDE.md
+.claude/

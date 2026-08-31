@@ -1,5 +1,7 @@
 # FinScope — Personal Spending Intelligence
 
+![CI](https://github.com/Aimanhakeemi/finscope/actions/workflows/ci.yml/badge.svg)
+
 FinScope turns a plain bank/credit-card CSV into an honest picture of where your money goes: it auto-categorizes every transaction, finds the subscriptions you forgot about, flags weird charges, forecasts next month, and lets you ask questions in plain English ("how much on coffee since June?").
 
 <p align="center">
@@ -104,7 +106,7 @@ The forecaster is the weakest component at 58.7940 MAPE. That number is reported
 ## Quick start
 
 ```bash
-git clone <your-repo-url> finscope
+git clone https://github.com/Aimanhakeemi/finscope
 cd finscope
 cp .env.example .env
 docker compose up --build

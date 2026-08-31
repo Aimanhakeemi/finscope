@@ -1,8 +1,8 @@
 # FinScope — Visual Design Direction
 
-The current UI reads as a generic dark SaaS dashboard. This document defines the
-target look. Codex implements it; do not deviate from the tokens below without
-saying so.
+This document defines FinScope's visual system: a "statement" aesthetic that
+favours legible numbers over dashboard chrome. Treat the tokens below as fixed;
+changing them is a deliberate design decision, not a casual edit.
 
 ## Concept: "Statement"
 

@@ -1,7 +1,7 @@
 # FinScope — Roadmap
 
-Build in milestones; each is a shippable, demoable state and maps to a GitHub
-milestone + a set of issues.
+This roadmap breaks the work into milestones. Each milestone is a shippable,
+demoable state.
 
 ## M0 — Scaffolding (½ day)
 - [ ] Repo, `docker-compose.yml`, `.env.example`, CI skeleton

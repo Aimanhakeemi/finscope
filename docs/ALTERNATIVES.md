@@ -1,8 +1,7 @@
 # FinScope — Alternate Solution Review & Design Tradeoffs
 
-This document is the "why not something else" record. It exists so that a reviewer
-(or an implementation agent) does not re-open decisions that were made deliberately,
-and so the reasoning survives past the moment it was made.
+This document records the alternatives that were considered and why the current
+choice was made, so the reasoning is not lost.
 
 Format: for each decision — the options, the axes that matter, the choice, and the
 cost we accept by choosing it.

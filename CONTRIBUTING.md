@@ -33,7 +33,7 @@ gates passing. Keep `ANTHROPIC_API_KEY` unset for tests and evaluation.
 Use one branch and pull request per milestone. Use Conventional Commits, keep
 tests deterministic, and do not change the taxonomy, API shapes, or database
 schema without updating the authoritative docs in the same change. See
-`docs/BUILD_PLAN.md` for the full milestone contract.
+`docs/ROADMAP.md` for the milestone plan.
 
 The LLM is used only for the NL→SQL feature. Categorization, recurring and
 anomaly detection, forecasting, and evaluation must remain local and offline.
