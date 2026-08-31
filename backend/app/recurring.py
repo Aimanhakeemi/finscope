@@ -8,6 +8,7 @@ This module has no framework dependencies so it is trivial to unit-test.
 from __future__ import annotations
 
 import statistics
+from collections import Counter
 from dataclasses import dataclass
 from datetime import date, timedelta
 
@@ -22,6 +23,17 @@ CADENCES: dict[str, tuple[int, int]] = {
 
 MIN_OCCURRENCES = 3
 MAX_AMOUNT_CV = 0.25  # stddev / mean
+RECURRING_ELIGIBLE_CATEGORIES = frozenset(
+    {
+        "subscriptions",
+        "utilities",
+        "rent_mortgage",
+        "health",
+        "income",
+        "entertainment",
+        "other",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -29,6 +41,7 @@ class Transaction:
     merchant: str
     txn_date: date
     amount: float  # negative = outflow
+    category: str = ""
 
 
 @dataclass(frozen=True)
@@ -68,6 +81,11 @@ def detect_recurring(
     groups: list[RecurringGroup] = []
     for merchant, txns in by_merchant.items():
         if len(txns) < MIN_OCCURRENCES:
+            continue
+        if any(t.category for t in txns) and (
+            Counter(t.category for t in txns).most_common(1)[0][0]
+            not in RECURRING_ELIGIBLE_CATEGORIES
+        ):
             continue
 
         txns = sorted(txns, key=lambda t: t.txn_date)

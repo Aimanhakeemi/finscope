@@ -57,6 +57,10 @@ Targets: accuracy ≥ 0.90, macro-F1 ≥ 0.85.
    weekly 7±2, biweekly 14±3, monthly 30±5, quarterly 91±10, annual 365±20.
 4. Require amount stability: `stddev / mean ≤ 0.25` (allows small price changes).
 5. Emit a `recurring_group` with `next_expected = last_seen + cadence`.
+- Detection is restricted to bill-like categories: `subscriptions`, `utilities`,
+  `rent_mortgage`, `health`, `income`, `entertainment`, and `other`; variable
+  consumer spending such as fuel, groceries, dining, coffee, transport, and
+  shopping is not treated as a bill even when its timing and amounts look regular.
 
 ### Metrics
 Precision / recall / F1 against the `recurring` flags in the labels file.

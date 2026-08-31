@@ -7,15 +7,27 @@ from app.etl import clean_merchant
 from app.recurring import Transaction, detect_recurring, is_active
 
 
-def _series(merchant: str, start: date, cadence_days: int, n: int, amount: float):
+def _series(
+    merchant: str,
+    start: date,
+    cadence_days: int,
+    n: int,
+    amount: float,
+    category: str,
+):
     return [
-        Transaction(merchant, start + timedelta(days=cadence_days * i), amount)
+        Transaction(
+            merchant,
+            start + timedelta(days=cadence_days * i),
+            amount,
+            category,
+        )
         for i in range(n)
     ]
 
 
 def test_detects_monthly_subscription():
-    txns = _series("NETFLIX.COM", date(2026, 1, 3), 30, 8, -15.49)
+    txns = _series("NETFLIX.COM", date(2026, 1, 3), 30, 8, -15.49, "subscriptions")
     groups = detect_recurring(txns, today=date(2026, 8, 29))
 
     assert len(groups) == 1
@@ -27,10 +39,10 @@ def test_detects_monthly_subscription():
 
 def test_ignores_irregular_merchant():
     txns = [
-        Transaction("CORNER STORE", date(2026, 1, 1), -5),
-        Transaction("CORNER STORE", date(2026, 1, 9), -22),
-        Transaction("CORNER STORE", date(2026, 3, 2), -8),
-        Transaction("CORNER STORE", date(2026, 6, 20), -40),
+        Transaction("CORNER STORE", date(2026, 1, 1), -5, "shopping"),
+        Transaction("CORNER STORE", date(2026, 1, 9), -22, "shopping"),
+        Transaction("CORNER STORE", date(2026, 3, 2), -8, "shopping"),
+        Transaction("CORNER STORE", date(2026, 6, 20), -40, "shopping"),
     ]
     assert detect_recurring(txns, today=date(2026, 8, 29)) == []
 
@@ -38,14 +50,19 @@ def test_ignores_irregular_merchant():
 def test_rejects_unstable_amounts():
     # regular cadence but wildly varying amounts -> not a subscription
     txns = [
-        Transaction("VARIABLE LLC", date(2026, 1, 1) + timedelta(days=30 * i), amt)
+        Transaction(
+            "VARIABLE LLC",
+            date(2026, 1, 1) + timedelta(days=30 * i),
+            amt,
+            "subscriptions",
+        )
         for i, amt in enumerate([-10, -80, -15, -120, -12])
     ]
     assert detect_recurring(txns, today=date(2026, 8, 29)) == []
 
 
 def test_active_flag():
-    txns = _series("SPOTIFY USA", date(2025, 1, 5), 30, 6, -10.99)
+    txns = _series("SPOTIFY USA", date(2025, 1, 5), 30, 6, -10.99, "subscriptions")
     g = detect_recurring(txns, today=date(2026, 8, 29))[0]
     assert is_active(g, today=date(2025, 7, 10)) is True
     assert is_active(g, today=date(2026, 8, 29)) is False
@@ -61,6 +78,7 @@ def test_synthetic_recurring_precision_and_recall():
             clean_merchant(row["description"]),
             date.fromisoformat(row["date"]),
             float(row["amount"]),
+            row["category"],
         )
         for row in rows
     ]
@@ -81,3 +99,26 @@ def test_synthetic_recurring_precision_and_recall():
     recall = true_positive / (true_positive + false_negative)
     assert precision >= 0.85
     assert recall >= 0.80
+
+
+def test_ignores_recurring_fuel_merchant():
+    txns = [
+        Transaction("CHEVRON", date(2026, 1, 1) + timedelta(days=30 * i), amount, "fuel")
+        for i, amount in enumerate([-45.00, -44.75, -45.25, -45.10, -44.90])
+    ]
+
+    assert detect_recurring(txns, today=date(2026, 8, 29)) == []
+
+
+def test_detects_same_pattern_for_subscription_category():
+    txns = [
+        Transaction(
+            "CHEVRON",
+            date(2026, 1, 1) + timedelta(days=30 * i),
+            amount,
+            "subscriptions",
+        )
+        for i, amount in enumerate([-45.00, -44.75, -45.25, -45.10, -44.90])
+    ]
+
+    assert len(detect_recurring(txns, today=date(2026, 8, 29))) == 1

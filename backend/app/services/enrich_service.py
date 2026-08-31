@@ -26,7 +26,10 @@ def enrich_user(session: Session, user_id: UUID, today: date | None = None) -> N
     detected = detect_recurring(
         [
             RecurringTransaction(
-                transaction.merchant, transaction.txn_date, float(transaction.amount)
+                transaction.merchant,
+                transaction.txn_date,
+                float(transaction.amount),
+                str(transaction.category),
             )
             for transaction in transactions
         ],
