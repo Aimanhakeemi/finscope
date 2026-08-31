@@ -1,155 +1,158 @@
 # FinScope — Personal Spending Intelligence
 
-FinScope turns a plain bank/credit-card CSV into an honest picture of where your
-money goes: it auto-categorizes every transaction, finds the subscriptions you
-forgot about, flags weird charges, forecasts next month, and lets you ask
-questions in plain English ("how much on coffee since June?").
+FinScope turns a plain bank/credit-card CSV into an honest picture of where your money goes: it auto-categorizes every transaction, finds the subscriptions you forgot about, flags weird charges, forecasts next month, and lets you ask questions in plain English ("how much on coffee since June?").
 
-It is a portfolio project that deliberately sits at the intersection of three
-roles:
+<p align="center">
+  <img src="docs/img/dashboard-light.png" alt="FinScope dashboard in the light theme" width="100%">
+</p>
+
+## What it does
+
+- Imports and categorizes transactions from a bank CSV.
+- Detects recurring payments and forgotten subscriptions.
+- Flags anomalous charges and unusual spending.
+- Answers natural-language questions with auditable SQL.
+- Forecasts next month’s spending from historical transactions.
+
+## Three roles, one project
 
 | Role | What this project demonstrates |
 | --- | --- |
-| **Software Engineer** | REST API, relational schema, migrations, auth, tests, Docker, CI/CD, typed frontend |
+| **Software Engineer** | REST API, relational schema, migrations, tests, Docker, CI/CD, typed frontend |
 | **Data Analyst** | ETL pipeline, exploratory analysis, recurring-payment detection, anomaly detection, time-series forecasting, dashboards |
 | **AI Engineer** | Local text-classification model, natural-language → SQL, and an offline evaluation harness with metrics |
 
----
-
 ## The real-life problem
 
-1. People lose an estimated 1–2 forgotten subscriptions each (~$100–300/yr) because
-   statements are noisy and banks don't surface recurring charges well.
-2. Budgeting apps make you categorize transactions by hand, so people stop using them.
-3. "Where did my money actually go last month?" is a 20-minute spreadsheet exercise.
+Bank statements are noisy: recurring charges hide in transaction lists, categories require manual cleanup, and a question like “where did my money go last month?” can become a 20-minute spreadsheet exercise. FinScope addresses those three friction points from a CSV you can export from any bank. No bank integration is required for the demo.
 
-FinScope automates all three from a file you can already export from any bank.
+## Screenshots
 
-## Why it stays simple
+![Subscriptions view](docs/img/subscriptions.png)
 
-- **One input format**: a CSV with `date, description, amount`. No bank integration
-  required to demo (Plaid is an optional stretch goal).
-- **Synthetic data included**: `data/generate_synthetic.py` produces a realistic
-  12-month statement, so the repo runs with zero real financial data and the tests
-  are deterministic.
-- **Three services, one `docker-compose up`**: API, Postgres, frontend.
+*Subscriptions make recurring costs visible, including cadence and monthly cost.*
 
----
+![Alerts view](docs/img/alerts.png)
 
-## Architecture at a glance
+*Alerts surface unusual charges with the reason and transaction context.*
+
+![Ask view](docs/img/ask.png)
+
+*Ask turns a plain-English question into a reviewable SQL query and result.*
+
+![Dashboard in light and dark themes](docs/img/dashboard-dark.png)
+
+*Light and dark themes*
+
+## Architecture
 
 ```mermaid
 flowchart LR
-    CSV["Bank CSV\n(date, description, amount)"] --> API
-    subgraph API["FastAPI backend (Python)"]
-        ETL["ETL / normalize\n(pandas)"]
-        CAT["Categorizer\nrules + sklearn model"]
-        REC["Recurring detector\n(periodicity analysis)"]
-        ANOM["Anomaly detector\n(robust z-score / IQR)"]
-        FC["Forecaster\n(statsmodels)"]
-        NLQ["NL question → SQL\n(Claude API)"]
+    CSV["Bank CSV<br/>(date, description, amount)"] --> API
+    subgraph API["FastAPI backend · Python"]
+        ETL["ETL / normalize<br/>(pandas)"] --> CAT["Categorizer<br/>(rules + scikit-learn)"]
+        CAT --> REC["Recurring detector<br/>(periodicity analysis)"]
+        CAT --> ANOM["Anomaly detector<br/>(robust z-score / IQR)"]
+        CAT --> FC["Forecaster<br/>(statsmodels)"]
+        CAT --> NLQ["Ask: natural language → SQL"]
     end
     API --> DB[("PostgreSQL")]
-    DB --> WEB["React + TypeScript\ndashboard (Recharts)"]
-    NLQ --> LLM
-    EVAL["Evaluation harness\n(metrics + reports)"] -.reads.-> DB
+    DB --> WEB["React + TypeScript<br/>dashboard (Recharts)"]
+    NLQ --> LLM["Anthropic API"]
+    EVAL["Offline evaluation harness"] -.-> API
 ```
 
-Full detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Imported rows are normalized before deterministic rules and the local model classify them; the analytical detectors and forecast remain offline, while only Ask uses the Anthropic API. FastAPI exposes the data and analysis over REST, PostgreSQL is the source of truth, and the same fixtures feed the evaluation harness. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full design.
 
----
+## Evaluation
 
-## Tech stack & why
+The committed report is generated from 12 months of synthetic data, with categorizer train seed 42 and evaluation seed 7. These are the current offline results:
 
-| Layer | Choice | Reason |
+| Component | Metric | Result | Gate |
+| --- | --- | ---: | --- |
+| Categorizer | accuracy | **0.8825** | ≥ 0.84 — PASS |
+| Categorizer | macro-F1 | **0.8370** | ≥ 0.78 — PASS |
+| Recurring detector | precision | **0.9270** | ≥ 0.82 — PASS |
+| Recurring detector | recall | **1.0000** | ≥ 0.75 — PASS |
+| Anomaly detector | precision | **1.0000** | ≥ 0.7 — PASS |
+| NL→SQL | valid-SQL rate | **1.0000** | ≥ 0.95 — PASS |
+| NL→SQL | execution accuracy | **1.0000** | ≥ 0.8 — PASS |
+| Forecaster | MAPE (3-month backtest, seasonal-naive baseline) | **58.7940** | reported |
+
+### Categorizer routing ablation
+
+| Configuration | Accuracy | Review rate |
+| --- | ---: | ---: |
+| rules-only | 0.6175 | 0.4111 |
+| local-model-only | 0.8434 | 0.5798 |
+| hybrid (rules + local model) | **0.8825** | **0.3675** |
+
+The forecaster is the weakest component at 58.7940 MAPE. That number is reported, not gated; the other gated metrics must pass. CI runs the evaluation harness and fails when a gate regresses. Read the [full evaluation report](docs/eval_report.md).
+
+## Tech stack
+
+| Layer | Choice | Why it fits |
 | --- | --- | --- |
-| Backend API | **Python 3.11 + FastAPI** | Same language as the ML/data code; async; auto OpenAPI docs |
-| Data / ML | **pandas, scikit-learn, statsmodels** | Standard analyst + ML toolkit; light enough to run in CI |
-| LLM | **Anthropic Claude API** (`anthropic` SDK) | Natural-language→SQL only |
-| Database | **PostgreSQL 16** | Real SQL for the NL→SQL feature and window-function analytics |
-| Migrations | **Alembic** | Versioned schema |
-| Frontend | **React + TypeScript + Vite + Recharts + Tailwind** | Typed UI, fast dev server, charts without a heavy BI dep |
-| Packaging | **Docker + docker-compose** | One command to run everything |
-| CI | **GitHub Actions** | Lint (ruff), type-check (mypy), tests (pytest), frontend build |
-| Tests | **pytest + Vitest** | Deterministic thanks to synthetic data + seeded models |
-
----
+| Backend API | Python 3.11 + FastAPI | One language for the API and data/ML code |
+| Database | PostgreSQL 16 | Real SQL for analytics and Ask |
+| Persistence | SQLAlchemy + Alembic | Typed models and versioned migrations |
+| Data / ML | pandas + scikit-learn + statsmodels | ETL, local classification, and forecasting |
+| LLM | Anthropic SDK | Powers Ask’s natural-language → SQL flow |
+| Frontend | React 18 + TypeScript + Vite + Recharts + Tailwind | Typed UI and focused data visualizations |
+| Runtime | Docker Compose | One command for the app, API, and database |
+| CI | GitHub Actions | Lint, type-check, test, build, and eval gates |
+| Tests | pytest + Vitest | Backend and frontend regression coverage |
 
 ## Quick start
 
 ```bash
-git clone <your-repo-url> finscope && cd finscope
-cp .env.example .env          # add ANTHROPIC_API_KEY for LLM features (optional)
-python data/generate_synthetic.py --months 12 --out data/sample_statement.csv
+git clone <your-repo-url> finscope
+cd finscope
+cp .env.example .env
 docker compose up --build
 ```
 
-The API rebuilds the local categorizer from `data/sample_statement.labels.csv` when
-that labels file is present. CI does the same before running the backend tests; the
-generated model and sidecar stay uncommitted.
+`ANTHROPIC_API_KEY` is optional; only the Ask feature needs it. Open
+http://localhost:5173, go to **Import**, and upload `data/sample_statement.csv`.
 
-- API + docs: http://localhost:8000/docs
-- Dashboard: http://localhost:5173
+- App: http://localhost:5173
+- API docs: http://localhost:8000/docs
 
-Then upload `data/sample_statement.csv` in the dashboard, or:
-
-```bash
-curl -F "file=@data/sample_statement.csv" http://localhost:8000/api/imports
-```
-
-## Run the evaluation harness
+## Running the tests / eval
 
 ```bash
-cd backend && python -m app.eval --report ../docs/eval_report.md
+cd backend && pytest
+python -m app.eval --report ../docs/eval_report.md
 ```
-
-Produces categorization accuracy / macro-F1, recurring-detection precision/recall,
-and NL→SQL execution accuracy against a labeled fixture set.
-
----
 
 ## Repo layout
 
-```
+```text
 finscope/
 ├── README.md
-├── docs/
-│   ├── PRD.md                 # product requirements & scope
-│   ├── ARCHITECTURE.md        # components, data flow, decisions
-│   ├── ALTERNATIVES.md        # alternate solutions reviewed + design tradeoffs
-│   ├── API_SPEC.md            # exact REST contract for every endpoint
-│   ├── DB_SCHEMA.md           # authoritative PostgreSQL DDL
-│   ├── DATA_DICTIONARY.md     # every column explained + taxonomy
-│   ├── ML.md                  # model card, features, routing logic
-│   ├── EVALUATION.md          # how each ML/analytic piece is measured
-│   ├── BUILD_PLAN.md          # implementation contract, milestone by milestone
-│   └── ROADMAP.md             # milestones you can check off on GitHub
+├── CONTRIBUTING.md
+├── .github/workflows/ci.yml
 ├── backend/
-│   ├── requirements.txt
-│   ├── app/
-│   │   ├── main.py            # FastAPI app + routes
-│   │   ├── recurring.py       # recurring-payment detection (implemented)
-│   │   ├── categorize.py      # local rules + ML categorization
-│   │   ├── anomaly.py         # anomaly detection (skeleton)
-│   │   └── nlq.py             # natural-language → SQL (skeleton)
-│   └── tests/
-│       └── test_recurring.py
+│   └── app/
+│       ├── eval.py
+│       ├── routes/              # API route modules
+│       └── services/            # application services
+├── frontend/                    # React + TypeScript app
 ├── data/
-│   └── generate_synthetic.py  # deterministic fake statement generator
-├── frontend/                  # React + TS dashboard
+│   └── sample_statement.csv     # demo upload
+├── docs/
+│   ├── DESIGN.md
+│   ├── ARCHITECTURE.md
+│   ├── eval_report.md
+│   └── img/                     # README screenshots
 ├── docker-compose.yml
-└── .github/workflows/ci.yml
+└── LICENSE
 ```
 
----
+## Design
 
-## Suggested GitHub presentation
-
-- Pin the repo; use topics: `ai-engineering`, `data-analysis`, `fastapi`, `llm`, `portfolio`.
-- Put the dashboard screenshot + the mermaid diagram at the top of the README.
-- Add a `docs/eval_report.md` committed from a real run so reviewers see metrics.
-- Keep commits scoped to the milestones in [docs/ROADMAP.md](docs/ROADMAP.md).
+See [docs/DESIGN.md](docs/DESIGN.md) for FinScope’s visual system.
 
 ## License
 
-MIT — see `LICENSE`.
+MIT — see [LICENSE](LICENSE).
