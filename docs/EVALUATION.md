@@ -10,9 +10,12 @@ cd backend && python -m app.eval --report ../docs/eval_report.md
 ```
 
 Steps:
-1. Generate a fresh synthetic statement + labels with a fixed seed.
-2. Run the full pipeline (ETL → categorize → recurring → anomaly → forecast).
-3. Compare against `data/sample_statement.labels.csv` and the NL→SQL fixture.
+1. Generate a fresh synthetic train split (seed 42) and eval split (seed 7). The
+   categorizer trains on the train labels, then scores only the eval labels. The eval
+   split contains unseen variant forms, rare long-tail merchants, and ambiguous rows.
+2. Run the full pipeline (ETL → categorize → recurring → anomaly → forecast) on the
+   eval split.
+3. Compare against the eval labels and the NL→SQL fixture.
 4. Write a Markdown report with tables + a confusion matrix, and exit non-zero if
    any gated metric regresses below its threshold (so CI catches it).
 
@@ -22,6 +25,8 @@ Steps:
 | --- | --- |
 | `data/sample_statement.csv` | pipeline input |
 | `data/sample_statement.labels.csv` | true category + recurring flag per row |
+| `data/generate_synthetic.py --split train` | first-half variants, no long-tail rows |
+| `data/generate_synthetic.py --split eval` | second-half variants, long-tail + ambiguous rows |
 | `backend/tests/fixtures/nlq_cases.yaml` | 25 question → gold-SQL / gold-result pairs |
 | `backend/tests/fixtures/anomaly_truth.csv` | ids of injected anomalies |
 
@@ -43,7 +48,7 @@ Steps:
 ## Ablations worth showing in the report
 
 - Categorizer: rules-only vs. local-model-only — accuracy and review rate.
-- Confidence threshold sweep (0.4 → 0.7) → accuracy vs. manual-review rate curve.
+- Confidence threshold sweep (0.2 → 0.8) → auto-routed accuracy vs. manual-review rate curve.
 - Recurring detector: effect of the amount-stability filter on precision.
 
 ## CI integration

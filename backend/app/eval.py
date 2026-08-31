@@ -93,7 +93,7 @@ def _is_true(value: object) -> bool:
     return str(value).strip().casefold() in {"1", "true", "yes"}
 
 
-def _generate_synthetic(output_path: Path) -> Path:
+def _generate_synthetic(output_path: Path, seed: int, split: str) -> Path:
     """Run the repository generator so eval uses the same source as the demo."""
     subprocess.run(
         [
@@ -102,7 +102,9 @@ def _generate_synthetic(output_path: Path) -> Path:
             "--months",
             "12",
             "--seed",
-            "42",
+            str(seed),
+            "--split",
+            split,
             "--out",
             str(output_path),
         ],
@@ -207,20 +209,23 @@ def _categorizer_evaluation(
             ),
         ),
     ]
-    threshold_sweep = [
-        ThresholdResult(
-            threshold,
-            metrics["categorizer_accuracy"],
-            _safe_divide(
-                sum(
-                    prediction.source == "model" and prediction.confidence < threshold
-                    for prediction in predictions
+    threshold_sweep = []
+    for threshold in (round(0.20 + index * 0.10, 2) for index in range(7)):
+        reviewed = [
+            prediction.source == "model" and prediction.confidence < threshold
+            for prediction in predictions
+        ]
+        routed = [index for index, is_reviewed in enumerate(reviewed) if not is_reviewed]
+        threshold_sweep.append(
+            ThresholdResult(
+                threshold,
+                _safe_divide(
+                    sum(expected[index] == predicted[index] for index in routed),
+                    len(routed),
                 ),
-                len(predictions),
-            ),
+                _safe_divide(sum(reviewed), len(reviewed)),
+            )
         )
-        for threshold in (round(0.40 + index * 0.05, 2) for index in range(7))
-    ]
     return metrics, per_class, matrix, ablations, threshold_sweep
 
 
@@ -483,11 +488,13 @@ def run_evaluation() -> EvaluationResult:
     """Run every offline evaluation and return report-ready values."""
     with tempfile.TemporaryDirectory(prefix="finscope-eval-") as temporary_directory:
         temporary_path = Path(temporary_directory)
-        statement_path = temporary_path / "sample_statement.csv"
-        labels_path = _generate_synthetic(statement_path)
-        labels = pd.read_csv(labels_path)
+        train_statement_path = temporary_path / "train_statement.csv"
+        eval_statement_path = temporary_path / "eval_statement.csv"
+        train_labels_path = _generate_synthetic(train_statement_path, seed=42, split="train")
+        eval_labels_path = _generate_synthetic(eval_statement_path, seed=7, split="eval")
+        eval_labels = pd.read_csv(eval_labels_path)
         model_path = temporary_path / "categorizer.joblib"
-        train_categorizer(labels_path, model_path, database_url=None)
+        train_categorizer(train_labels_path, model_path, database_url=None)
 
         (
             categorizer_metrics,
@@ -495,14 +502,14 @@ def run_evaluation() -> EvaluationResult:
             matrix,
             categorizer_ablations,
             threshold_sweep,
-        ) = _categorizer_evaluation(labels, model_path)
-        transactions = _recurring_transactions(labels)
-        recurring_metrics, recurring_ablations = _recurring_metrics(labels, transactions)
+        ) = _categorizer_evaluation(eval_labels, model_path)
+        transactions = _recurring_transactions(eval_labels)
+        recurring_metrics, recurring_ablations = _recurring_metrics(eval_labels, transactions)
         metrics = {
             **categorizer_metrics,
             **recurring_metrics,
-            **_anomaly_metrics(labels),
-            "forecaster_mape": _forecast_mape(labels),
+            **_anomaly_metrics(eval_labels),
+            "forecaster_mape": _forecast_mape(eval_labels),
             **_nlq_metrics(),
         }
         return EvaluationResult(
@@ -557,7 +564,8 @@ def write_report(result: EvaluationResult, report_path: Path) -> None:
         "",
         f"Generated on: {date.today().isoformat()}",
         "",
-        "Synthetic data: 12 months, seed 42. All metrics are computed offline.",
+        "Synthetic data: 12 months; categorizer train split (seed 42) and eval "
+        "split (seed 7). All metrics are computed offline.",
         "",
         "## Summary",
         "",
@@ -603,7 +611,7 @@ def write_report(result: EvaluationResult, report_path: Path) -> None:
     lines.extend(["", "### Confidence threshold sweep", ""])
     lines.extend(
         [
-            "| Threshold | Accuracy | Review rate |",
+            "| Threshold | Auto-routed accuracy | Review rate |",
             "| ---: | ---: | ---: |",
         ]
     )
@@ -624,7 +632,9 @@ def write_report(result: EvaluationResult, report_path: Path) -> None:
             "",
             "## Evaluation notes",
             "",
-            "- Categorization trains on the generated labels and evaluates every generated row.",
+            "- Categorization trains on the first half of each merchant's variants (seed 42) "
+            "and evaluates on the second half (seed 7), including rare long-tail and "
+            "ambiguous transactions.",
             "- Recurring detection is evaluated against the labels' recurring flag.",
             "- Anomaly detection excludes labeled recurring transactions and exact duplicates, "
             "matching the import pipeline and anomaly fixture tests.",

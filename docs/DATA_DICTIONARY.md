@@ -93,10 +93,16 @@ Minimum required (after column mapping):
 ## Synthetic data generator
 
 `data/generate_synthetic.py`:
-- Seeded RNG (`--seed`, default 42) → reproducible.
-- Emits: monthly salary (income), rent (monthly recurring), 4–6 subscriptions with
-  realistic cadences, weekly groceries, frequent coffee/dining, occasional shopping,
-  utilities, 2–3 deliberate anomalies (a large one-off, a duplicated-looking charge,
-  a price jump on one subscription).
+- Seeded RNG (`--seed`, default 42) → reproducible. `--split all` (the default) uses
+  every merchant variant; `--split train` uses the first half of each profile's
+  variants and excludes long-tail merchants; `--split eval` uses the second half and
+  includes the long-tail and ambiguous transactions.
+- Emits merchant variants with store numbers, abbreviations, spacing/punctuation noise,
+  and casing changes; rare long-tail merchants across every taxonomy category; and
+  about 1.5% genuinely ambiguous transactions with the more-correct label.
+- Also emits monthly salary, rent and recurring bills with small amount noise, weekly
+  groceries, frequent coffee/dining, occasional shopping, utilities, and three stable
+  anomaly identities (a large appliance purchase, an overseas ATM withdrawal, and a
+  near-duplicate charge).
 - Also writes `data/sample_statement.labels.csv` with the true category + recurring
   flags for evaluation.
