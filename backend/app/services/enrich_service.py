@@ -17,12 +17,13 @@ from app.recurring import detect_recurring, is_active
 
 def enrich_user(session: Session, user_id: UUID, today: date | None = None) -> None:
     """Recompute recurring groups and anomaly flags over a user's full history."""
-    today = today or date.today()
     transactions = session.scalars(
         select(TransactionModel)
         .where(TransactionModel.user_id == user_id)
         .order_by(TransactionModel.txn_date, TransactionModel.id)
     ).all()
+    if today is None:
+        today = max((transaction.txn_date for transaction in transactions), default=date.today())
     detected = detect_recurring(
         [
             RecurringTransaction(

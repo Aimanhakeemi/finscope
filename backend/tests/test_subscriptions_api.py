@@ -34,6 +34,15 @@ def test_subscriptions_include_cadence_cost_and_price_change(client: TestClient)
     assert netflix["occurrences"] >= 10
     assert netflix["price_changed"] is True
     assert netflix["next_expected"] > netflix["last_seen"]
+    core_monthly = {
+        "greenfield apartments",
+        "netflix.com",
+        "spotify usa",
+        "state farm insurance",
+        "city water & power",
+    }
+    assert core_monthly <= subscriptions.keys()
+    assert all(subscriptions[merchant]["active"] is True for merchant in core_monthly)
     assert "acme corp payroll" not in subscriptions
     assert body["total_monthly_cost"] > 0
     assert body["total_annual_cost"] == round(body["total_monthly_cost"] * 12, 2)
